@@ -82,6 +82,7 @@
         .calendar { width: 100%; border-collapse: collapse; text-align: center; }
         .calendar th, .calendar td { padding: 8px; border: 1px solid #aaa; }
         .calendar .today { background: #ffaa66; }
+        .reset-warning { color: #ff6666; font-weight: bold; margin-top: 15px; border-top: 1px solid #aaa; padding-top: 10px; }
     </style>
 </head>
 <body>
@@ -193,6 +194,45 @@
             applyAccentAndTaskbar();
             return true;
         } catch(e) { console.warn("Failed to load state", e); return false; }
+    }
+
+    function resetAllData() {
+        if (!confirm("⚠️ Reset this PC will erase all your installed games, folders, files, office projects, and settings. This action cannot be undone. Are you sure?")) return;
+        // Clear all mutable state
+        deletedApps = [];
+        deletedDownloadedGames = [];
+        customFolders = [];
+        desktopFiles = [];
+        appPositions = {};
+        officeProjects = [];
+        downloadedGames = [];
+        wallpaperUrl = null;
+        wallpaperDataURL = null;
+        desktopBgColor = "#1b4d2e";
+        taskbarAutoHide = false;
+        iconSize = 80;
+        iconSpacing = 100;
+        taskbarHeight = 48;
+        fontSize = 13;
+        borderRadius = 12;
+        animations = true;
+        accentColor = "#2c5a3e";
+        taskbarTransparency = 0.92;
+        showHiddenFiles = false;
+        // Close all open windows
+        for (let [winId, info] of openWindows.entries()) {
+            if (info.windowElement) info.windowElement.remove();
+        }
+        openWindows.clear();
+        updateTaskbarButtons();
+        // Reset wallpaper and background
+        applyWallpaper();
+        applyAccentAndTaskbar();
+        // Re-render desktop icons
+        renderDesktopIcons();
+        // Save empty state
+        saveState();
+        alert("Your PC has been reset. All data erased.");
     }
 
     function autoSave() { saveState(); }
@@ -480,7 +520,7 @@
         });
     }
 
-    // --- ENHANCED SETTINGS with fixed raw GitHub wallpaper URL ---
+    // --- ENHANCED SETTINGS with Reset this PC button ---
     function openSettings() {
         const wallpapers = [
             { name: "Classic Green", type: "color", value: "#1b4d2e" },
@@ -517,6 +557,11 @@
                 <h4>Theme</h4>
                 <select id="thm"><option value="green">Green</option><option value="blue">Blue</option><option value="dark">Dark</option></select><br>
                 <button id="apply">Apply All</button>
+                
+                <div class="reset-warning">
+                    <button id="resetPCBtn" style="background:#aa3333; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">⚠️ Reset this PC</button>
+                    <p style="font-size:12px; margin-top:5px;">This will erase all your installed apps, files, folders and settings.</p>
+                </div>
             </div>
         `;
         let win = createWindow('Settings', html, 'settings');
@@ -554,6 +599,7 @@
         const applyBtn = win.querySelector('#apply');
         const wallpaperUpload = win.querySelector('#wallpaperUpload');
         const resetWallpaper = win.querySelector('#resetWallpaper');
+        const resetPCBtn = win.querySelector('#resetPCBtn');
         
         wallpaperUpload.onchange = (e) => {
             const file = e.target.files[0];
@@ -575,6 +621,10 @@
             applyWallpaper();
             saveState();
             alert("Wallpaper reset to solid color.");
+        };
+        resetPCBtn.onclick = () => {
+            win.close(); // close settings window
+            resetAllData();
         };
         applyBtn.onclick = () => {
             iconSize = parseInt(win.querySelector('#is').value);
