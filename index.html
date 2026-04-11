@@ -73,6 +73,9 @@
         .wallpaper-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
         .wallpaper-preview { width: 80px; height: 60px; background-size: cover; background-position: center; border: 2px solid #aaa; border-radius: 6px; cursor: pointer; transition: 0.1s; }
         .wallpaper-preview:hover { transform: scale(1.05); border-color: white; }
+        .picture-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; padding: 10px; }
+        .gallery-img { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; cursor: pointer; transition: transform 0.1s; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .gallery-img:hover { transform: scale(1.02); }
     </style>
 </head>
 <body>
@@ -94,14 +97,22 @@
     <div class="start-menu" id="startMenu">
         <div class="start-header">🌟 Windows Server 2026</div>
         <ul class="start-items">
-            <li data-app="paint">🎨 Paint</li><li data-app="myPC">🖥️ My PC</li><li data-app="ie">🌐 Internet Explorer</li>
-            <li data-app="notepad">📝 Notepad</li><li data-app="games">🎮 Games</li><li data-app="store">🛒 Microsoft Store</li>
-            <li data-app="office">📊 Microsoft Office</li><li data-app="cmd">💻 Command Prompt</li>
+            <li data-app="notepad">📝 Notepad</li>
+            <li data-app="games">🎮 Games</li>
+            <li data-app="store">🛒 Microsoft Store</li>
+            <li data-app="office">📊 Microsoft Office</li>
+            <li data-app="cmd">💻 Command Prompt</li>
             <li data-app="recycleBin">🗑️ Recycle Bin</li>
+            <li id="aiChatBtn">🤖 AI Chat</li>
             <div class="divider"></div>
-            <li data-folder="documents">📄 Documents</li><li data-folder="pictures">🖼️ Pictures</li><li data-folder="music">🎵 Music</li>
-            <li id="runBtn">▶️ Run...</li><div class="divider"></div>
-            <li id="settingsBtn">⚙️ Settings</li><li id="shutdownBtn">⏻ Shutdown</li><li id="restartBtn">🔄 Restart</li>
+            <li data-folder="documents">📄 Documents</li>
+            <li id="picturesBtn">🖼️ Pictures</li>   <!-- Changed to open gallery -->
+            <li data-folder="music">🎵 Music</li>
+            <li id="runBtn">▶️ Run...</li>
+            <div class="divider"></div>
+            <li id="settingsBtn">⚙️ Settings</li>
+            <li id="shutdownBtn">⏻ Shutdown</li>
+            <li id="restartBtn">🔄 Restart</li>
         </ul>
     </div>
 </div>
@@ -256,7 +267,7 @@
     function makeDraggable(h,w) { let ox,oy,drag=false; h.addEventListener('mousedown',(e)=>{ if(e.target.closest('.window-controls')) return; drag=true; ox=e.clientX-w.offsetLeft; oy=e.clientY-w.offsetTop; w.style.zIndex=Date.now(); document.addEventListener('mousemove',move); document.addEventListener('mouseup',up); e.preventDefault(); }); function move(e){ if(!drag) return; let l=e.clientX-ox, t=e.clientY-oy; l=Math.min(Math.max(l,0),window.innerWidth-w.offsetWidth); t=Math.min(Math.max(t,0),window.innerHeight-70); w.style.left=l+'px'; w.style.top=t+'px'; } function up(){ drag=false; document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); } }
     function createWindow(title, html, appId) { let w = document.createElement('div'); w.className='app-window'; w.style.left='100px'; w.style.top='80px'; w.style.zIndex=Date.now(); if(!animations) w.style.transition='none'; w.style.borderRadius=borderRadius+'px'; w.innerHTML=`<div class="window-header" style="border-radius:${borderRadius}px ${borderRadius}px 0 0"><span>${title}</span><div class="window-controls"><span class="minimize">─</span><span class="close-win">✕</span></div></div><div class="window-content">${html}</div>`; makeDraggable(w.querySelector('.window-header'),w); let icon = {paint:'🎨',myPC:'💻',ie:'🌐',notepad:'📝',games:'🎮',store:'🛒',office:'📊',cmd:'>_',recycleBin:'🗑️'}[appId] || '📄'; registerWindow(appId, w, title, icon); return w; }
 
-    // --- DESKTOP ICONS & POSITIONING (unchanged logic, but with save hooks)---
+    // --- DESKTOP ICONS & POSITIONING ---
     function getNextFreePosition() { let taken = []; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) { let p = appPositions[a.id]; if(p) taken.push(`${p.x},${p.y}`); } for(let f of customFolders) taken.push(`${f.x},${f.y}`); for(let f of desktopFiles) taken.push(`${f.x},${f.y}`); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) { let p = appPositions[`game_${g.id}`]; if(p) taken.push(`${p.x},${p.y}`); } for(let i=0;i<100;i++){ let x=20+(i%5)*iconSpacing, y=20+Math.floor(i/5)*iconSpacing; if(!taken.includes(`${x},${y}`)) return {x,y}; } return {x:20,y:20}; }
     function autoArrangeIcons() { let idx=0; let items = []; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) items.push({type:'app',id:a.id}); for(let f of customFolders) items.push({type:'folder',id:f.id}); for(let f of desktopFiles) items.push({type:'file',id:f.id}); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) items.push({type:'game',id:g.id}); for(let it of items) { let x=20+(idx%5)*iconSpacing, y=20+Math.floor(idx/5)*iconSpacing; if(it.type==='app') appPositions[it.id]={x,y}; else if(it.type==='folder') { let f=customFolders.find(f=>f.id==it.id); if(f) { f.x=x; f.y=y; } } else if(it.type==='file') { let f=desktopFiles.find(f=>f.id==it.id); if(f) { f.x=x; f.y=y; } } else if(it.type==='game') appPositions[`game_${it.id}`]={x,y}; idx++; } renderDesktopIcons(); }
     function renderDesktopIcons() { desktopIconsContainer.innerHTML = ''; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) { let p=appPositions[a.id]||getNextFreePosition(); appPositions[a.id]=p; desktopIconsContainer.appendChild(createIcon('app',a.id,a.icon,a.name,p.x,p.y)); } for(let f of customFolders) desktopIconsContainer.appendChild(createIcon('folder',f.id,'📁',f.name,f.x,f.y)); for(let f of desktopFiles) desktopIconsContainer.appendChild(createIcon('file',f.id,'📄',f.name,f.x,f.y)); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) { let p=appPositions[`game_${g.id}`]||getNextFreePosition(); appPositions[`game_${g.id}`]=p; desktopIconsContainer.appendChild(createIcon('game',g.id,g.icon,g.name,p.x,p.y)); } let rp=appPositions['recycleBin']||{x:20,y:400}; appPositions['recycleBin']=rp; let rec=createIcon('app','recycleBin','🗑️','Recycle Bin',rp.x,rp.y); rec.addEventListener('dragover',e=>e.preventDefault()); rec.addEventListener('drop',handleDropOnRecycleBin); desktopIconsContainer.appendChild(rec); applyDesktopSettings(); saveState(); }
@@ -325,14 +336,34 @@
     function gamesUI(){ return `<div><select id="gameSelect"><option value="snake">Snake</option><option value="tictactoe">Tic-Tac-Toe (Smart AI)</option><option value="pong">Pong</option></select><button id="resetGame">New</button></div><canvas id="gameCanvas" width="450" height="350" style="background:#1a2a1f;"></canvas><div id="gameStatus">Score:0</div>`; }
     function initGames(win){ let canvas=win.querySelector('#gameCanvas'), ctx=canvas.getContext('2d'), sel=win.querySelector('#gameSelect'), reset=win.querySelector('#resetGame'), status=win.querySelector('#gameStatus'); let cur='snake', gameInt=null, pongInt=null; function stop(){ if(gameInt)clearInterval(gameInt); if(pongInt)clearInterval(pongInt); } function snake(){ stop(); let snake=[{x:10,y:10}], dir='RIGHT', food={x:15,y:10}, score=0; function draw(){ ctx.fillStyle='#1a2a1f'; ctx.fillRect(0,0,canvas.width,canvas.height); for(let i=0;i<snake.length;i++){ ctx.fillStyle=i===0?'#7ed957':'#3b8c2a'; ctx.fillRect(snake[i].x*20,snake[i].y*20,18,18); } ctx.fillStyle='#ff5252'; ctx.fillRect(food.x*20,food.y*20,18,18); status.innerText=`Score:${score}`; } function update(){ let head={...snake[0]}; if(dir==='RIGHT')head.x++; if(dir==='LEFT')head.x--; if(dir==='UP')head.y--; if(dir==='DOWN')head.y++; if(head.x<0||head.y<0||head.x>=20||head.y>=20||snake.some(s=>s.x===head.x&&s.y===head.y)){ clearInterval(gameInt); gameInt=null; status.innerText='Game Over'; return; } snake.unshift(head); if(head.x===food.x&&head.y===food.y){ score++; food={x:Math.floor(Math.random()*20),y:Math.floor(Math.random()*20)}; status.innerText=`Score:${score}`; }else snake.pop(); draw(); } function key(e){ if(e.key==='ArrowUp'&&dir!=='DOWN')dir='UP'; else if(e.key==='ArrowDown'&&dir!=='UP')dir='DOWN'; else if(e.key==='ArrowLeft'&&dir!=='RIGHT')dir='LEFT'; else if(e.key==='ArrowRight'&&dir!=='LEFT')dir='RIGHT'; } window.removeEventListener('keydown',window._snk); window._snk=key; window.addEventListener('keydown',window._snk); draw(); gameInt=setInterval(update,130); } function ttt(){ stop(); let board=Array(9).fill(null), turn='X', over=false; function drawBoard(){ ctx.fillStyle='#2c3e2b'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.strokeStyle='white'; for(let i=1;i<3;i++){ ctx.beginPath(); ctx.moveTo(i*150,0); ctx.lineTo(i*150,canvas.height); ctx.stroke(); ctx.moveTo(0,i*116); ctx.lineTo(canvas.width,i*116); ctx.stroke(); } for(let i=0;i<9;i++) if(board[i]){ let x=(i%3)*150+40, y=Math.floor(i/3)*116+50; ctx.font='48px Arial'; ctx.fillStyle=board[i]==='X'?'#ffaa66':'#66ccff'; ctx.fillText(board[i],x,y+10); } status.innerText=`Turn: ${turn}`; } function checkWinner(){ let l=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; for(let ll of l) if(board[ll[0]] && board[ll[0]]===board[ll[1]] && board[ll[1]]===board[ll[2]]) return board[ll[0]]; if(board.every(v=>v)) return 'tie'; return null; } function aiMove(){ let best=null; for(let i=0;i<9;i++) if(!board[i]){ let test=[...board]; test[i]='O'; if(checkWinner()==='O'){ best=i; break; } } if(best===null) for(let i=0;i<9;i++) if(!board[i]){ let test=[...board]; test[i]='X'; if(checkWinner()==='X'){ best=i; break; } } if(best===null && !board[4]) best=4; if(best===null){ let corners=[0,2,6,8]; for(let c of corners) if(!board[c]){ best=c; break; } } if(best===null) for(let i=0;i<9;i++) if(!board[i]){ best=i; break; } if(best!==null){ board[best]='O'; let w=checkWinner(); if(w){ over=true; status.innerText=w==='tie'?'Tie!':`O wins!`; drawBoard(); return; } turn='X'; drawBoard(); } } function handleClick(e){ if(over || turn!=='X') return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy; let col=Math.floor(mx/150), row=Math.floor(my/116); if(col>=0 && col<3 && row>=0 && row<3){ let idx=row*3+col; if(!board[idx]){ board[idx]='X'; let w=checkWinner(); if(w){ over=true; status.innerText=w==='tie'?'Tie!':`X wins!`; drawBoard(); return; } turn='O'; drawBoard(); if(!over) aiMove(); } } } canvas.removeEventListener('click',window._ttt); window._ttt=handleClick; canvas.addEventListener('click',window._ttt); drawBoard(); } function pong(){ stop(); let ballX=canvas.width/2,ballY=canvas.height/2,ballDX=2,ballDY=2,paddleY=canvas.height/2-40,aiY=canvas.height/2-40,ps=0,as=0; function draw(){ ctx.fillStyle='#1a2a1f'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='white'; ctx.fillRect(10,paddleY,10,80); ctx.fillRect(canvas.width-20,aiY,10,80); ctx.beginPath(); ctx.arc(ballX,ballY,6,0,Math.PI*2); ctx.fill(); status.innerText=`Player:${ps} AI:${as}`; } function update(){ ballX+=ballDX; ballY+=ballDY; if(ballY<0||ballY>canvas.height)ballDY=-ballDY; if(ballX<20&&ballX>10&&ballY>paddleY&&ballY<paddleY+80)ballDX=-ballDX; if(ballX>canvas.width-25&&ballX<canvas.width-10&&ballY>aiY&&ballY<aiY+80)ballDX=-ballDX; if(ballX<0){ as++; reset(); } if(ballX>canvas.width){ ps++; reset(); } let aiCenter=aiY+40; if(aiCenter<ballY-20)aiY+=3; else if(aiCenter>ballY+20)aiY-=3; aiY=Math.min(Math.max(aiY,0),canvas.height-80); draw(); } function reset(){ ballX=canvas.width/2; ballY=canvas.height/2; ballDX=(Math.random()>0.5?2:-2); ballDY=(Math.random()>0.5?2:-2); } function movePaddle(e){ let rect=canvas.getBoundingClientRect(); let my=(e.clientY-rect.top)*(canvas.height/rect.height); paddleY=Math.min(Math.max(my-40,0),canvas.height-80); } canvas.removeEventListener('mousemove',window._pong); window._pong=movePaddle; canvas.addEventListener('mousemove',window._pong); pongInt=setInterval(update,1000/60); draw(); } function switchGame(){ cur=sel.value; stop(); if(cur==='snake') snake(); else if(cur==='tictactoe') ttt(); else pong(); } sel.addEventListener('change',switchGame); reset.addEventListener('click',switchGame); switchGame(); }
 
-    // --- ENHANCED SETTINGS with ready wallpapers and previews ---
+    // --- PICTURES GALLERY (random images from Lorem Picsum) ---
+    function openPicturesGallery() {
+        const galleryId = 'pictures_gallery_' + Date.now();
+        const galleryHtml = `<div><h3>📷 Pictures Gallery</h3><div id="${galleryId}" class="picture-gallery"></div><p style="margin-top:10px;">Click any image to view full size.</p></div>`;
+        const win = createWindow('Pictures', galleryHtml, galleryId);
+        document.body.appendChild(win);
+        const galleryDiv = win.querySelector(`#${galleryId}`);
+        // Generate 15 random images from Lorem Picsum (different IDs each time)
+        const imageIds = Array.from({length: 15}, () => Math.floor(Math.random() * 200) + 1);
+        imageIds.forEach(id => {
+            const imgUrl = `https://picsum.photos/id/${id}/300/200`;
+            const fullUrl = `https://picsum.photos/id/${id}/1200/800`;
+            const img = document.createElement('img');
+            img.src = imgUrl;
+            img.className = 'gallery-img';
+            img.title = `Image ${id}`;
+            img.onclick = () => window.open(fullUrl, '_blank');
+            galleryDiv.appendChild(img);
+        });
+    }
+
+    // --- ENHANCED SETTINGS with fixed raw GitHub wallpaper URL ---
     function openSettings() {
-        // Pre-set wallpapers: solid color swatches and images
         const wallpapers = [
             { name: "Classic Green", type: "color", value: "#1b4d2e" },
             { name: "Windows Blue", type: "color", value: "#1e3a5f" },
             { name: "Dark Mode", type: "color", value: "#0a0f1a" },
-            { name: "Server 2026", type: "url", value: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Windows-Server-2026.png" },
+            { name: "Server 2026", type: "url", value: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Windows-Server-2026.png" }, // raw URL
             { name: "Forest", type: "url", value: "https://picsum.photos/id/104/1920/1080" },
             { name: "Ocean", type: "url", value: "https://picsum.photos/id/23/1920/1080" },
             { name: "Abstract", type: "url", value: "https://picsum.photos/id/96/1920/1080" }
@@ -368,7 +399,6 @@
         let win = createWindow('Settings', html, 'settings');
         document.body.appendChild(win);
         
-        // Populate wallpaper grid
         const grid = win.querySelector('#wallpaperGrid');
         wallpapers.forEach(wp => {
             const preview = document.createElement('div');
@@ -496,10 +526,13 @@
     document.addEventListener('click',e=>{ if(!startMenu.contains(e.target) && e.target!==startBtn) startMenu.classList.remove('show'); });
     document.querySelectorAll('[data-app]').forEach(el=>el.addEventListener('click',()=>{ launchApp(el.getAttribute('data-app')); startMenu.classList.remove('show'); }));
     document.querySelectorAll('[data-folder]').forEach(el=>el.addEventListener('click',()=>{ createNewFolder(); startMenu.classList.remove('show'); }));
+    document.getElementById('picturesBtn').addEventListener('click', () => { openPicturesGallery(); startMenu.classList.remove('show'); });
     document.getElementById('runBtn').addEventListener('click',()=>{ showRunDialog(); startMenu.classList.remove('show'); });
     document.getElementById('settingsBtn').addEventListener('click',()=>{ openSettings(); startMenu.classList.remove('show'); });
     document.getElementById('shutdownBtn').addEventListener('click',()=>{ shutdown(); startMenu.classList.remove('show'); });
     document.getElementById('restartBtn').addEventListener('click',()=>{ restart(); startMenu.classList.remove('show'); });
+    document.getElementById('aiChatBtn').addEventListener('click', () => { window.open('https://chat.deepseek.com/', '_blank'); startMenu.classList.remove('show'); });
+    
     function escapeHtml(s){ return s.replace(/[&<>]/g,m=> m==='&'?'&amp;': m==='<'?'&lt;':'&gt;'); }
     
     // Load saved state before boot
