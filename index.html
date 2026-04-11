@@ -32,7 +32,7 @@
         .taskbar-app-btn:hover { background: rgba(255,255,255,0.3); }
         .internet-status { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.4); padding: 4px 10px; border-radius: 20px; color: white; font-size: 12px; cursor: pointer; }
         .taskbar-time { color: white; font-size: 13px; background: rgba(0,0,0,0.4); padding: 4px 12px; border-radius: 20px; font-family: monospace; white-space: nowrap; }
-        .start-menu { position: absolute; bottom: 55px; left: 10px; width: 380px; background: rgba(20, 30, 35, 0.96); backdrop-filter: blur(20px); border-radius: 12px; border: 1px solid #3a5e6e; z-index: 1100; display: none; flex-direction: column; padding: 12px 0; }
+        .start-menu { position: absolute; bottom: 55px; left: 10px; width: 400px; background: rgba(20, 30, 35, 0.96); backdrop-filter: blur(20px); border-radius: 12px; border: 1px solid #3a5e6e; z-index: 1100; display: none; flex-direction: column; padding: 12px 0; }
         .start-menu.show { display: flex; }
         .start-header { padding: 8px 16px; border-bottom: 1px solid #3a5e6e; color: #eef4ff; font-weight: bold; }
         .start-items { list-style: none; padding: 6px 0; max-height: 400px; overflow-y: auto; }
@@ -76,6 +76,12 @@
         .picture-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; padding: 10px; }
         .gallery-img { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; cursor: pointer; transition: transform 0.1s; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .gallery-img:hover { transform: scale(1.02); }
+        .calculator { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 300px; margin: 0 auto; }
+        .calculator button { padding: 12px; font-size: 18px; cursor: pointer; background: #ddd; border: none; border-radius: 6px; }
+        .calculator .display { grid-column: span 4; background: #fff; padding: 12px; text-align: right; font-size: 24px; margin-bottom: 8px; border-radius: 6px; }
+        .calendar { width: 100%; border-collapse: collapse; text-align: center; }
+        .calendar th, .calendar td { padding: 8px; border: 1px solid #aaa; }
+        .calendar .today { background: #ffaa66; }
     </style>
 </head>
 <body>
@@ -104,9 +110,11 @@
             <li data-app="cmd">💻 Command Prompt</li>
             <li data-app="recycleBin">🗑️ Recycle Bin</li>
             <li id="aiChatBtn">🤖 AI Chat</li>
+            <li id="calendarBtn">📅 Calendar</li>
+            <li id="calculatorBtn">🧮 Calculator</li>
             <div class="divider"></div>
             <li data-folder="documents">📄 Documents</li>
-            <li id="picturesBtn">🖼️ Pictures</li>   <!-- Changed to open gallery -->
+            <li id="picturesBtn">🖼️ Pictures</li>
             <li data-folder="music">🎵 Music</li>
             <li id="runBtn">▶️ Run...</li>
             <div class="divider"></div>
@@ -169,7 +177,6 @@
             accentColor = state.accentColor || "#2c5a3e";
             taskbarTransparency = state.taskbarTransparency !== undefined ? state.taskbarTransparency : 0.92;
             showHiddenFiles = state.showHiddenFiles || false;
-            // Restore downloaded games
             downloadedGames = (state.downloadedGames || []).map(g => {
                 const def = storeGames.find(sg => sg.id === g.id);
                 if (def) {
@@ -189,7 +196,6 @@
     }
 
     function autoSave() { saveState(); }
-    // Override critical functions to auto-save
     const originalRender = renderDesktopIcons;
     window.renderDesktopIcons = function() { originalRender(); saveState(); };
     const originalCreateNewFolder = createNewFolder;
@@ -305,21 +311,139 @@
     // --- MICROSOFT OFFICE (Projects) ---
     function officeUI() { let html = `<div><h3>Microsoft Office</h3><div id="officeView"><div class="office-toolbar"><button id="newProjectBtn">➕ New Project</button></div><div id="projectList" class="office-project-list"></div></div></div>`; setTimeout(()=>{ let container = document.getElementById('officeView'); if(!container) return; function renderProjectList() { let listDiv = document.getElementById('projectList'); if(!listDiv) return; if(officeProjects.length===0) { listDiv.innerHTML='<p>No projects. Click "New Project" to create one.</p>'; return; } listDiv.innerHTML = officeProjects.map(p => `<div class="office-project-item" data-id="${p.id}"><span>📄 ${escapeHtml(p.name)}</span><div><button class="editProject">Edit</button> <button class="deleteProject">Delete</button></div></div>`).join(''); listDiv.querySelectorAll('.editProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); openProjectEditor(id); }; }); listDiv.querySelectorAll('.deleteProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); officeProjects=officeProjects.filter(p=>p.id!=id); renderProjectList(); saveState(); }; }); } function openProjectEditor(id) { let project = officeProjects.find(p=>p.id==id); if(!project) return; let win=createWindow(`Office - ${project.name}`, `<div class="office-editor"><input type="text" id="projName" value="${escapeHtml(project.name)}" style="width:100%; margin-bottom:10px;"><h4>Text</h4><textarea id="projText">${escapeHtml(project.textContent||'')}</textarea><h4>Drawing</h4><canvas id="officeCanvas" width="400" height="200" class="office-drawing" style="background:white;"></canvas><div><button id="clearCanvas">Clear Drawing</button></div><h4>Images</h4><input type="file" id="imageUpload" accept="image/*"><div id="imageList"></div><button id="saveProject">Save Project</button></div>`, `office_edit_${id}`); document.body.appendChild(win); let canvas=win.querySelector('#officeCanvas'), ctx=canvas.getContext('2d'); let drawing=false; if(project.drawingDataURL) { let img=new Image(); img.onload=()=>ctx.drawImage(img,0,0,canvas.width,canvas.height); img.src=project.drawingDataURL; } canvas.addEventListener('mousedown',()=>drawing=true); canvas.addEventListener('mouseup',()=>drawing=false); canvas.addEventListener('mousemove',(e)=>{ if(!drawing) return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let x=(e.clientX-rect.left)*sx, y=(e.clientY-rect.top)*sy; ctx.fillStyle='black'; ctx.fillRect(x-2,y-2,4,4); }); win.querySelector('#clearCanvas').onclick=()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); }; let imageList=win.querySelector('#imageList'); function refreshImages() { imageList.innerHTML=project.images?.map((img,idx)=>`<div><img src="${img}" style="max-width:100px; max-height:100px;"> <button data-idx="${idx}">Remove</button></div>`).join('')||''; imageList.querySelectorAll('button').forEach(btn=>{ btn.onclick=()=>{ let idx=parseInt(btn.getAttribute('data-idx')); project.images.splice(idx,1); refreshImages(); saveState(); }; }); } refreshImages(); win.querySelector('#imageUpload').onchange=(e)=>{ let file=e.target.files[0]; if(file){ let reader=new FileReader(); reader.onload=(ev)=>{ if(!project.images) project.images=[]; project.images.push(ev.target.result); refreshImages(); saveState(); }; reader.readAsDataURL(file); } }; win.querySelector('#saveProject').onclick=()=>{ project.name=win.querySelector('#projName').value; project.textContent=win.querySelector('#projText').value; project.drawingDataURL=canvas.toDataURL(); renderProjectList(); win.close(); saveState(); }; } function createNewProject() { let name=prompt("Project name:","My Project"); if(!name) return; let newId=Date.now()+Math.random(); officeProjects.push({ id:newId, name:name, textContent:"", drawingDataURL:null, images:[] }); renderProjectList(); saveState(); } document.getElementById('newProjectBtn').onclick=createNewProject; renderProjectList(); },50); return html; }
 
-    // --- ENHANCED MY PC: more files/folders ---
+    // --- ENHANCED MY PC: all files/folders clickable with random content ---
+    function getRandomFileContent(name) {
+        const contents = {
+            "System32": "Windows NT Kernel Version 2026\nBuild 26001.x86_64\nCopyright (c) Microsoft Corporation. All rights reserved.\n\nSystem32 directory contains core system files.\nCritical error if deleted.",
+            "Program Files": "[Directory]\nInstalled applications:\n- Windows Server 2026\n- Microsoft Office\n- Games Pack\n- Internet Explorer\nTotal size: 12.4 GB",
+            "Users": "User profiles:\n- Administrator\n- Guest\n- YourProfile\nDocuments, Desktop, Downloads folders.",
+            "Windows": "Windows operating system files.\nVersion: 2026 (Build 26001)\nRegistered owner: KrisXxXLL",
+            "pagefile.sys": "[System file] Virtual memory page file.\nSize: 4.00 GB\nCurrent usage: 32%",
+            "Recycler (hidden)": "Recycle Bin system folder.\nContains deleted items metadata.\nHidden system folder.",
+            "Documents and Settings": "Legacy user profile folder.\nCompatibility link to Users folder.",
+            "PerfLogs": "Performance logs directory.\nEmpty by default.\nUsed for system diagnostics.",
+            "ProgramData": "Application data storage.\nContains settings for installed software."
+        };
+        return contents[name] || `Random content from ${name}:\nLast modified: ${new Date().toLocaleString()}\nFile size: ${Math.floor(Math.random() * 10000)} bytes\nChecksum: 0x${Math.floor(Math.random() * 0xFFFF).toString(16)}`;
+    }
+    function openSystemFile(fileName) {
+        const content = getRandomFileContent(fileName);
+        const win = createWindow(fileName, `<pre style="white-space: pre-wrap; font-family: monospace;">${escapeHtml(content)}</pre>`, `file_${fileName}_${Date.now()}`);
+        document.body.appendChild(win);
+    }
     function myPCUI() {
         let hiddenClass = showHiddenFiles ? '' : 'style="display:none"';
         return `<div><h3>Local Disk (C:)</h3>
         <div class="file-item" data-file="system32" style="cursor:pointer">📁 System32</div>
-        <div>📁 Program Files</div>
-        <div>📁 Users</div>
-        <div>📁 Windows</div>
-        <div>📄 pagefile.sys</div>
-        <div ${hiddenClass}>📁 Recycler (hidden)</div>
-        <div>📁 Documents and Settings</div>
-        <div>📁 PerfLogs</div>
-        <div>📁 ProgramData</div>
+        <div class="file-item" data-file="Program Files" style="cursor:pointer">📁 Program Files</div>
+        <div class="file-item" data-file="Users" style="cursor:pointer">📁 Users</div>
+        <div class="file-item" data-file="Windows" style="cursor:pointer">📁 Windows</div>
+        <div class="file-item" data-file="pagefile.sys" style="cursor:pointer">📄 pagefile.sys</div>
+        <div class="file-item" data-file="Recycler (hidden)" ${hiddenClass} style="cursor:pointer">📁 Recycler (hidden)</div>
+        <div class="file-item" data-file="Documents and Settings" style="cursor:pointer">📁 Documents and Settings</div>
+        <div class="file-item" data-file="PerfLogs" style="cursor:pointer">📁 PerfLogs</div>
+        <div class="file-item" data-file="ProgramData" style="cursor:pointer">📁 ProgramData</div>
         <p style="margin-top:10px;"><i>${showHiddenFiles ? "Hidden files visible" : "Hidden files hidden"}</i></p>
         </div>`;
+    }
+    function attachMyPCListeners(win) {
+        win.querySelectorAll('.file-item').forEach(el => {
+            const fileName = el.getAttribute('data-file');
+            if (fileName === 'system32') {
+                el.addEventListener('click', () => openSystem32Code());
+            } else {
+                el.addEventListener('click', () => openSystemFile(fileName));
+            }
+        });
+    }
+
+    // --- CALENDAR (simple month view) ---
+    function openCalendar() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        let html = `<div style="text-align:center"><h3>📅 ${now.toLocaleString('default', { month: 'long' })} ${year}</h3><table class="calendar"><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr><tr>`;
+        let day = 1;
+        for (let i = 0; i < 6; i++) {
+            for (let j = 0; j < 7; j++) {
+                if (i === 0 && j < firstDay) {
+                    html += `<td></td>`;
+                } else if (day > daysInMonth) {
+                    html += `<td></td>`;
+                } else {
+                    const isToday = (day === now.getDate() && month === now.getMonth() && year === now.getFullYear());
+                    html += `<td class="${isToday ? 'today' : ''}">${day}</td>`;
+                    day++;
+                }
+            }
+            if (day > daysInMonth) break;
+            html += `</tr><tr>`;
+        }
+        html += `</tr></table></div>`;
+        const win = createWindow('Calendar', html, 'calendar');
+        document.body.appendChild(win);
+    }
+
+    // --- CALCULATOR (basic arithmetic) ---
+    function openCalculator() {
+        const calcId = 'calc_' + Date.now();
+        const html = `<div><h3>🧮 Calculator</h3><div class="calculator"><div class="display" id="${calcId}_display">0</div>
+        <button data-val="7">7</button><button data-val="8">8</button><button data-val="9">9</button><button data-op="/">/</button>
+        <button data-val="4">4</button><button data-val="5">5</button><button data-val="6">6</button><button data-op="*">*</button>
+        <button data-val="1">1</button><button data-val="2">2</button><button data-val="3">3</button><button data-op="-">-</button>
+        <button data-val="0">0</button><button data-val=".">.</button><button data-op="=">=</button><button data-op="+">+</button>
+        <button data-op="C">C</button></div></div>`;
+        const win = createWindow('Calculator', html, 'calculator');
+        document.body.appendChild(win);
+        const display = win.querySelector(`#${calcId}_display`);
+        let current = '0';
+        let prev = null;
+        let op = null;
+        function updateDisplay() { display.innerText = current; }
+        function compute() {
+            if (prev !== null && op !== null) {
+                let a = parseFloat(prev), b = parseFloat(current);
+                if (op === '+') current = (a + b).toString();
+                else if (op === '-') current = (a - b).toString();
+                else if (op === '*') current = (a * b).toString();
+                else if (op === '/') current = b !== 0 ? (a / b).toString() : 'Error';
+                prev = null;
+                op = null;
+                updateDisplay();
+            }
+        }
+        win.querySelectorAll('[data-val]').forEach(btn => {
+            btn.onclick = () => {
+                let val = btn.getAttribute('data-val');
+                if (val === '.') {
+                    if (!current.includes('.')) current += '.';
+                } else {
+                    if (current === '0' || current === 'Error') current = val;
+                    else current += val;
+                }
+                updateDisplay();
+            };
+        });
+        win.querySelectorAll('[data-op]').forEach(btn => {
+            btn.onclick = () => {
+                let operation = btn.getAttribute('data-op');
+                if (operation === 'C') {
+                    current = '0';
+                    prev = null;
+                    op = null;
+                    updateDisplay();
+                } else if (operation === '=') {
+                    compute();
+                } else {
+                    if (prev !== null && op !== null) compute();
+                    prev = current;
+                    op = operation;
+                    current = '0';
+                }
+            };
+        });
     }
 
     // --- OTHER APPS (Paint, Notepad, IE, CMD, Store) ---
@@ -343,7 +467,6 @@
         const win = createWindow('Pictures', galleryHtml, galleryId);
         document.body.appendChild(win);
         const galleryDiv = win.querySelector(`#${galleryId}`);
-        // Generate 15 random images from Lorem Picsum (different IDs each time)
         const imageIds = Array.from({length: 15}, () => Math.floor(Math.random() * 200) + 1);
         imageIds.forEach(id => {
             const imgUrl = `https://picsum.photos/id/${id}/300/200`;
@@ -363,7 +486,7 @@
             { name: "Classic Green", type: "color", value: "#1b4d2e" },
             { name: "Windows Blue", type: "color", value: "#1e3a5f" },
             { name: "Dark Mode", type: "color", value: "#0a0f1a" },
-            { name: "Server 2026", type: "url", value: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Windows-Server-2026.png" }, // raw URL
+            { name: "Server 2026", type: "url", value: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Windows-Server-2026.png" },
             { name: "Forest", type: "url", value: "https://picsum.photos/id/104/1920/1080" },
             { name: "Ocean", type: "url", value: "https://picsum.photos/id/23/1920/1080" },
             { name: "Abstract", type: "url", value: "https://picsum.photos/id/96/1920/1080" }
@@ -478,7 +601,7 @@
     function showRunDialog() { let cmd=prompt("Run command:\nopen [app], delete [app], restart pc, shutdown pc, 666"); if(!cmd) return; let c=cmd.trim().toLowerCase(); if(c.startsWith('open ')) { let an=c.substring(5); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an]) launchApp(map[an]); } else if(c.startsWith('delete ')) { let an=c.substring(7); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an] && !deletedApps.includes(map[an])) { deletedApps.push(map[an]); renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); saveState(); } } else if(c==='restart pc') restart(); else if(c==='shutdown pc') shutdown(); else if(c==='666') trigger666Chaos(); else alert("Invalid"); }
     function shutdown() { bootScreen.style.display='flex'; desktopDiv.style.display='none'; alert("Shutdown."); }
     function restart() { bootScreen.style.display='flex'; desktopDiv.style.display='none'; setTimeout(()=>location.reload(),800); }
-    function launchApp(id) { if(openWindows.has(id)) { openWindows.get(id).windowElement.style.display='flex'; return; } if(id==='recycleBin'){ if(openWindows.has('recycleBin')) openWindows.get('recycleBin').windowElement.style.display='flex'; else { let win=createWindow('Recycle Bin','<div>Loading...</div>','recycleBin'); document.body.appendChild(win); refreshRecycleBin(); } return; } let def=APP_LIST.find(a=>a.id===id); if(!def) return; let content='', init=null; if(id==='paint') { content=paintUI(); init=initPaint; } else if(id==='myPC') content=myPCUI(); else if(id==='ie') { content=ieUI(); init=initIE; } else if(id==='notepad') { content=notepadUI(); init=initNotepad; } else if(id==='games') { content=gamesUI(); init=initGames; } else if(id==='store') { content=storeUI(); init=initStore; } else if(id==='office') { content=officeUI(); init=null; } else if(id==='cmd') { content=cmdUI(); init=initCMD; } else return; let win=createWindow(def.name,content,id); document.body.appendChild(win); if(init) init(win); }
+    function launchApp(id) { if(openWindows.has(id)) { openWindows.get(id).windowElement.style.display='flex'; return; } if(id==='recycleBin'){ if(openWindows.has('recycleBin')) openWindows.get('recycleBin').windowElement.style.display='flex'; else { let win=createWindow('Recycle Bin','<div>Loading...</div>','recycleBin'); document.body.appendChild(win); refreshRecycleBin(); } return; } let def=APP_LIST.find(a=>a.id===id); if(!def) return; let content='', init=null; if(id==='paint') { content=paintUI(); init=initPaint; } else if(id==='myPC') { content=myPCUI(); init=(win)=>{ attachMyPCListeners(win); }; } else if(id==='ie') { content=ieUI(); init=initIE; } else if(id==='notepad') { content=notepadUI(); init=initNotepad; } else if(id==='games') { content=gamesUI(); init=initGames; } else if(id==='store') { content=storeUI(); init=initStore; } else if(id==='office') { content=officeUI(); init=null; } else if(id==='cmd') { content=cmdUI(); init=initCMD; } else return; let win=createWindow(def.name,content,id); document.body.appendChild(win); if(init) init(win); }
 
     // --- BSOD / SYSTEM32 ---
     let draggedItemType=null;
@@ -487,6 +610,7 @@
     function handleDropOnRecycleBin(e) { e.preventDefault(); if(draggedItemType==='system32') { if(isBsodActive) return; if(openWindows.has('myPC')){ let w=openWindows.get('myPC').windowElement; let s=w.querySelector('.file-item[data-file="system32"]'); if(s&&!system32Deleted){ s.remove(); system32Deleted=true; let div=w.querySelector('.window-content'); let warn=document.createElement('div'); warn.style.color='red'; warn.innerHTML='⚠️ System32 DELETED!'; div.appendChild(warn); } } triggerBSOD(); draggedItemType=null; } }
     function triggerBSOD() { if(isBsodActive) return; isBsodActive=true; let d=document.createElement('div'); d.className='bsod-overlay'; d.innerHTML=`<div class="bsod-box"><div class="bsod-title">💀 CRITICAL ERROR</div><div class="bsod-message">Missing: \\System32\\<br>Please repair.</div><div class="bsod-buttons"><button id="repairOption">🔧 Repair</button><button id="turnOffOption">⏻ Turn off</button></div><div id="repairProgressArea"></div></div>`; document.body.appendChild(d); d.querySelector('#repairOption').onclick=()=>{ d.remove(); isBsodActive=false; if(system32Deleted&&openWindows.has('myPC')){ let my=openWindows.get('myPC').windowElement; let old=my.querySelector('.warning-text'); if(old)old.remove(); let fc=my.querySelector('.file-container')||my; if(!fc.querySelector('.file-item[data-file="system32"]')){ let ns=document.createElement('div'); ns.className='file-item'; ns.setAttribute('data-file','system32'); ns.innerHTML='📁 System32'; ns.setAttribute('draggable','true'); ns.addEventListener('dragstart',handleFileDragStart); ns.addEventListener('dragend',handleFileDragEnd); fc.prepend(ns); system32Deleted=false; } } alert("Repaired!"); }; d.querySelector('#turnOffOption').onclick=()=>{ d.style.background='black'; d.innerHTML='<div style="color:white;margin-top:40vh;">Halted.</div>'; }; }
     function trigger666Chaos() { if(isBsodActive) return; let chaos=document.createElement('div'); chaos.className='chaos-overlay'; chaos.innerHTML='<div class="error-text">⚠️ 666 SYSTEM CORRUPTION ⚠️</div>'; document.body.appendChild(chaos); setTimeout(()=>{ chaos.remove(); triggerBSOD(); },3000); }
+    function openSystem32Code() { let code=`// Windows Server 2026 Kernel\n// System32 Core\nconst kernel = { version:"2026", build:26001 };\nfunction init() { return "System ready"; }`; let win=createWindow("System32 Source",`<pre style="background:#1e1e1e; color:#d4d4d4; padding:12px;">${code}</pre>`,"system32_code"); document.body.appendChild(win); }
 
     // --- RIGHT-CLICK CONTEXT MENU (Desktop & Taskbar)---
     let activeContextMenu = null;
@@ -527,6 +651,8 @@
     document.querySelectorAll('[data-app]').forEach(el=>el.addEventListener('click',()=>{ launchApp(el.getAttribute('data-app')); startMenu.classList.remove('show'); }));
     document.querySelectorAll('[data-folder]').forEach(el=>el.addEventListener('click',()=>{ createNewFolder(); startMenu.classList.remove('show'); }));
     document.getElementById('picturesBtn').addEventListener('click', () => { openPicturesGallery(); startMenu.classList.remove('show'); });
+    document.getElementById('calendarBtn').addEventListener('click', () => { openCalendar(); startMenu.classList.remove('show'); });
+    document.getElementById('calculatorBtn').addEventListener('click', () => { openCalculator(); startMenu.classList.remove('show'); });
     document.getElementById('runBtn').addEventListener('click',()=>{ showRunDialog(); startMenu.classList.remove('show'); });
     document.getElementById('settingsBtn').addEventListener('click',()=>{ openSettings(); startMenu.classList.remove('show'); });
     document.getElementById('shutdownBtn').addEventListener('click',()=>{ shutdown(); startMenu.classList.remove('show'); });
@@ -535,9 +661,7 @@
     
     function escapeHtml(s){ return s.replace(/[&<>]/g,m=> m==='&'?'&amp;': m==='<'?'&lt;':'&gt;'); }
     
-    // Load saved state before boot
     const hasSaved = loadState();
-    // Boot sequence
     setTimeout(()=>{ bootScreen.style.opacity='0'; setTimeout(()=>{ bootScreen.style.display='none'; desktopDiv.style.display='block'; renderDesktopIcons(); if(!hasSaved) autoArrangeIcons(); saveState(); },600); },2600);
     window.addEventListener('beforeunload', () => { saveState(); });
 </script>
