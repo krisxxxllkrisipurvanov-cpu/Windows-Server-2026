@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Windows 7.5 Fan Edition | KrisXxXLL</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; height: 100vh; width: 100vw; background: #0c0e14; }
+        .boot-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #1a2a3a, #0a0f1a); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; transition: opacity 0.8s ease; }
+        .boot-logo { font-size: 4rem; font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 20px #00a8ff; margin-bottom: 30px; }
+        .boot-logo span { color: #ffaa33; }
+        .boot-sub { font-size: 1rem; color: #bbb; margin-bottom: 40px; }
+        .boot-animation { width: 280px; height: 6px; background: #2c3e4e; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+        .boot-progress { width: 0%; height: 100%; background: linear-gradient(90deg, #3bc9ff, #0066cc); border-radius: 10px; animation: bootProgress 2.5s ease forwards; }
+        @keyframes bootProgress { 0% { width: 0%; } 100% { width: 100%; } }
+        .boot-text { font-size: 0.85rem; color: #9aaebf; }
+        .desktop { display: none; width: 100%; height: 100%; background: #1b4d2e; position: relative; overflow: hidden; transition: background-color 0.2s; }
+        .desktop-icons { position: absolute; top: 20px; left: 20px; display: flex; flex-direction: column; gap: 20px; z-index: 10; transition: all 0.1s; }
+        .desktop-icon { display: flex; flex-direction: column; align-items: center; width: 80px; cursor: pointer; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 6px 4px; color: white; text-shadow: 0 1px 2px black; backdrop-filter: blur(2px); }
+        .desktop-icon.dragging { opacity: 0.5; }
+        .desktop-icon span { font-size: 12px; margin-top: 5px; text-align: center; font-weight: 500; }
+        .context-menu { position: fixed; background: #2d2d2d; border: 1px solid #555; border-radius: 6px; box-shadow: 2px 2px 10px rgba(0,0,0,0.5); z-index: 10000; min-width: 160px; }
+        .context-menu div { padding: 8px 12px; color: white; cursor: pointer; font-size: 13px; }
+        .context-menu div:hover { background: #3a6ea5; }
+        .taskbar { position: absolute; bottom: 0; left: 0; width: 100%; height: 48px; background: rgba(30, 40, 50, 0.92); backdrop-filter: blur(12px); border-top: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; padding: 0 10px; z-index: 1000; transition: bottom 0.2s; }
+        .taskbar.auto-hide { bottom: -48px; }
+        .start-button { background: linear-gradient(135deg, #2d6a4f, #1b4332); padding: 6px 18px; border-radius: 20px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; margin-right: 20px; }
+        .start-button:hover { background: linear-gradient(135deg, #40916c, #2d6a4f); }
+        .taskbar-time { margin-left: auto; color: white; font-size: 13px; background: rgba(0,0,0,0.4); padding: 4px 12px; border-radius: 20px; }
+        .start-menu { position: absolute; bottom: 55px; left: 10px; width: 380px; background: rgba(20, 30, 35, 0.96); backdrop-filter: blur(20px); border-radius: 12px; border: 1px solid #3a5e6e; z-index: 1100; display: none; flex-direction: column; padding: 12px 0; }
+        .start-menu.show { display: flex; }
+        .start-header { padding: 8px 16px; border-bottom: 1px solid #3a5e6e; color: #eef4ff; font-weight: bold; }
+        .start-items { list-style: none; padding: 6px 0; max-height: 400px; overflow-y: auto; }
+        .start-items li { padding: 10px 20px; color: white; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+        .start-items li:hover { background: #2e6b4e; }
+        .divider { height: 1px; background: #3a5e6e; margin: 8px 0; }
+        .app-window { position: absolute; background: #ece9e0; border-radius: 12px 12px 8px 8px; box-shadow: 0 12px 28px rgba(0,0,0,0.5); min-width: 380px; min-height: 320px; width: 500px; height: 450px; z-index: 500; display: flex; flex-direction: column; resize: both; overflow: auto; border: 1px solid #aaa; }
+        .window-header { background: linear-gradient(90deg, #2c5a3e, #1f3e2c); padding: 8px 12px; border-radius: 10px 10px 0 0; cursor: grab; color: white; font-weight: bold; display: flex; justify-content: space-between; }
+        .window-header:active { cursor: grabbing; }
+        .window-controls { display: flex; gap: 12px; }
+        .window-controls span { cursor: pointer; font-weight: bold; background: rgba(0,0,0,0.3); width: 24px; text-align: center; border-radius: 4px; }
+        .window-controls span:hover { background: rgba(255,255,255,0.3); }
+        .window-content { flex: 1; padding: 12px; background: #fef9e8; overflow: auto; font-family: monospace; }
+        .cmd-output { background: #0c0c0c; color: #0f0; font-family: 'Consolas', monospace; padding: 10px; height: 300px; overflow-y: auto; white-space: pre-wrap; font-size: 13px; }
+        .cmd-input-line { display: flex; background: #0c0c0c; padding: 5px 10px; border-top: 1px solid #333; }
+        .cmd-prompt { color: #0f0; font-weight: bold; margin-right: 8px; }
+        .cmd-input { background: #0c0c0c; border: none; color: #0f0; font-family: 'Consolas', monospace; flex: 1; outline: none; font-size: 13px; }
+        .chaos-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: red; z-index: 10001; display: flex; flex-direction: column; justify-content: center; align-items: center; animation: errorFlash 0.1s infinite; }
+        @keyframes errorFlash { 0% { background: red; } 50% { background: darkred; } 100% { background: red; } }
+        .error-text { color: white; font-size: 2rem; font-weight: bold; text-align: center; text-shadow: 2px 2px 0 black; margin: 20px; }
+        .bsod-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a2f6c; z-index: 10000; color: white; font-family: 'Consolas', monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; backdrop-filter: blur(2px); }
+        .bsod-box { background: #0a2f6c; padding: 30px; border-radius: 12px; max-width: 600px; border: 2px solid #9ec8ff; }
+        .bsod-title { font-size: 2rem; margin-bottom: 20px; color: #ffb347; }
+        .bsod-message { font-size: 1.2rem; margin-bottom: 30px; }
+        .bsod-buttons button { margin: 10px; padding: 10px 20px; font-size: 1rem; cursor: pointer; background: #1e3a5f; border: 1px solid white; color: white; border-radius: 6px; }
+        .repair-animation { margin-top: 20px; width: 80%; height: 10px; background: #333; border-radius: 5px; overflow: hidden; }
+        .repair-bar { width: 0%; height: 100%; background: #4caf50; }
+        .file-item { padding: 8px 12px; margin: 5px; background: #e0dbc8; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: bold; border: 1px solid #aaa; }
+        .file-item[data-file="system32"] { background: #ffcccc; color: #990000; border: 1px solid red; }
+        .file-item:hover { background: #d0cbb8; }
+        .ie-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .ai-chat-icon { background: #2c5a3e; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.5rem; transition: 0.1s; }
+        .ai-chat-icon:hover { background: #40916c; transform: scale(1.05); }
+        .ai-chat-panel { margin-top: 12px; border-top: 1px solid #aaa; padding-top: 12px; background: #f0f0e0; border-radius: 8px; }
+        .chat-messages { height: 150px; overflow-y: auto; background: white; padding: 8px; font-size: 12px; margin-bottom: 8px; }
+        .chat-input-area { display: flex; gap: 6px; }
+        .chat-input { flex: 1; padding: 4px; }
+        .paint-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; align-items: center; }
+        .paint-toolbar button, .paint-toolbar select, .paint-toolbar input { padding: 4px 8px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="boot-screen" id="bootScreen">
+    <div class="boot-logo">Windows <span>7.5</span> Fan Edition</div>
+    <div class="boot-sub">created by KrisXxXLL</div>
+    <div class="boot-animation"><div class="boot-progress"></div></div>
+    <div class="boot-text">Loading enhanced environment...</div>
+</div>
+
+<div class="desktop" id="desktop">
+    <div class="desktop-icons" id="desktopIcons"></div>
+    <div class="taskbar" id="taskbar">
+        <div class="start-button" id="startBtn">📌 Start</div>
+        <div class="taskbar-time" id="clock">12:00 PM</div>
+    </div>
+    <div class="start-menu" id="startMenu">
+        <div class="start-header">🌟 Windows 7.5 Fan Edition</div>
+        <ul class="start-items">
+            <li data-app="paint">🎨 Paint</li><li data-app="myPC">🖥️ My PC</li><li data-app="ie">🌐 Internet Explorer</li>
+            <li data-app="notepad">📝 Notepad</li><li data-app="games">🎮 Games (Multi)</li><li data-app="cmd">💻 Command Prompt (CMD)</li>
+            <li data-app="recycleBin">🗑️ Recycle Bin</li>
+            <div class="divider"></div>
+            <li data-folder="documents">📄 Documents</li><li data-folder="pictures">🖼️ Pictures</li><li data-folder="music">🎵 Music</li>
+            <li id="runBtn">▶️ Run...</li>
+            <div class="divider"></div>
+            <li id="settingsBtn">⚙️ Settings</li><li id="shutdownBtn">⏻ Shutdown</li><li id="restartBtn">🔄 Restart</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // ---------- CORE VARIABLES ----------
+    const APP_LIST = [
+        { id: "paint", name: "Paint", icon: "🎨", desktop: true },
+        { id: "myPC", name: "My PC", icon: "💻", desktop: true },
+        { id: "ie", name: "Internet Explorer", icon: "🌐", desktop: true },
+        { id: "notepad", name: "Notepad", icon: "📄", desktop: true },
+        { id: "games", name: "Games", icon: "🎮", desktop: true },
+        { id: "cmd", name: "Command Prompt", icon: ">_", desktop: false },
+        { id: "recycleBin", name: "Recycle Bin", icon: "🗑️", desktop: false }
+    ];
+    let deletedApps = [], openWindows = new Map(), desktopBgColor = "#1b4d2e", taskbarAutoHide = false, iconSize = 80;
+    let isBsodActive = false, system32Deleted = false;
+    let draggedItemType = null, draggedAppId = null;
+    let customFolders = [];
+
+    // ---------- DOM elements ----------
+    const bootScreen = document.getElementById('bootScreen'), desktopDiv = document.getElementById('desktop');
+    const desktopIconsContainer = document.getElementById('desktopIcons'), startMenu = document.getElementById('startMenu');
+    const startBtn = document.getElementById('startBtn'), clockSpan = document.getElementById('clock'), taskbar = document.getElementById('taskbar');
+
+    // ---------- Helper: apply settings ----------
+    function applyDesktopSettings() {
+        document.querySelectorAll('.desktop-icon').forEach(icon => { icon.style.width = `${iconSize}px`; });
+        desktopDiv.style.backgroundColor = desktopBgColor;
+        if (taskbarAutoHide) taskbar.classList.add('auto-hide');
+        else taskbar.classList.remove('auto-hide');
+    }
+
+    // ---------- Render desktop icons (apps + custom folders) ----------
+    function renderDesktopIcons() {
+        desktopIconsContainer.innerHTML = '';
+        APP_LIST.filter(app => app.desktop && !deletedApps.includes(app.id)).forEach(app => {
+            const iconDiv = document.createElement('div'); iconDiv.className = 'desktop-icon';
+            iconDiv.setAttribute('data-app-id', app.id); iconDiv.setAttribute('draggable', 'true');
+            iconDiv.innerHTML = `<div style="font-size:42px;">${app.icon}</div><span>${app.name}</span>`;
+            iconDiv.addEventListener('dragstart', handleDesktopDragStart); iconDiv.addEventListener('dragend', handleDragEnd);
+            iconDiv.addEventListener('dblclick', (e) => { e.stopPropagation(); launchApp(app.id); });
+            desktopIconsContainer.appendChild(iconDiv);
+        });
+        customFolders.forEach(folder => {
+            const folderDiv = document.createElement('div'); folderDiv.className = 'desktop-icon';
+            folderDiv.setAttribute('data-folder-id', folder.id);
+            folderDiv.innerHTML = `<div style="font-size:42px;">📁</div><span>${folder.name}</span>`;
+            folderDiv.addEventListener('dblclick', (e) => { e.stopPropagation(); openFolderWindow(folder); });
+            desktopIconsContainer.appendChild(folderDiv);
+        });
+        const recycleIcon = document.createElement('div'); recycleIcon.className = 'desktop-icon';
+        recycleIcon.setAttribute('data-app-id', 'recycleBin'); recycleIcon.innerHTML = `<div style="font-size:42px;">🗑️</div><span>Recycle Bin</span>`;
+        recycleIcon.addEventListener('dblclick', () => launchApp('recycleBin'));
+        recycleIcon.addEventListener('dragover', (e) => e.preventDefault()); recycleIcon.addEventListener('drop', handleDropOnRecycleBin);
+        desktopIconsContainer.appendChild(recycleIcon);
+        applyDesktopSettings();
+    }
+
+    function openFolderWindow(folder) {
+        const win = createWindow(folder.name, `<div style="padding:20px; text-align:center;">📁 This folder is empty.<br><small>Right-click desktop to create more.</small></div>`, `folder_${folder.id}`);
+        document.body.appendChild(win);
+        openWindows.set(`folder_${folder.id}`, win);
+    }
+
+    function createNewFolder() {
+        let newId = Date.now();
+        let baseName = "New Folder";
+        let name = baseName;
+        let count = 1;
+        while (customFolders.some(f => f.name === name)) { name = `${baseName} (${count++})`; }
+        customFolders.push({ id: newId, name: name });
+        renderDesktopIcons();
+    }
+
+    // ---------- Right-click context menu ----------
+    let activeContextMenu = null;
+    function showContextMenu(x, y) {
+        if (activeContextMenu) activeContextMenu.remove();
+        const menu = document.createElement('div');
+        menu.className = 'context-menu';
+        menu.style.left = x + 'px';
+        menu.style.top = y + 'px';
+        menu.innerHTML = `<div id="ctxNewFolder">📁 New Folder</div><div id="ctxRefresh">🔄 Refresh</div><div id="ctxLargeIcons">🔍 Larger Icons</div><div id="ctxSmallIcons">🔍 Smaller Icons</div>`;
+        document.body.appendChild(menu);
+        activeContextMenu = menu;
+        const closeMenu = (e) => { if (activeContextMenu && !activeContextMenu.contains(e.target)) { activeContextMenu.remove(); activeContextMenu = null; document.removeEventListener('click', closeMenu); } };
+        document.addEventListener('click', closeMenu);
+        document.getElementById('ctxNewFolder').onclick = () => { createNewFolder(); if(activeContextMenu) activeContextMenu.remove(); activeContextMenu=null; };
+        document.getElementById('ctxRefresh').onclick = () => { renderDesktopIcons(); if(activeContextMenu) activeContextMenu.remove(); activeContextMenu=null; };
+        document.getElementById('ctxLargeIcons').onclick = () => { iconSize = Math.min(iconSize + 10, 120); applyDesktopSettings(); if(activeContextMenu) activeContextMenu.remove(); activeContextMenu=null; };
+        document.getElementById('ctxSmallIcons').onclick = () => { iconSize = Math.max(iconSize - 10, 50); applyDesktopSettings(); if(activeContextMenu) activeContextMenu.remove(); activeContextMenu=null; };
+    }
+    desktopDiv.addEventListener('contextmenu', (e) => { e.preventDefault(); showContextMenu(e.clientX, e.clientY); });
+
+    // ---------- Drag & drop handlers (unchanged, keep existing) ----------
+    function handleDesktopDragStart(e) { let t = e.target.closest('.desktop-icon'); if(t && t.getAttribute('data-app-id') && t.getAttribute('data-app-id') !== 'recycleBin') { draggedItemType='app'; draggedAppId=t.getAttribute('data-app-id'); e.dataTransfer.setData('text/plain', draggedAppId); e.dataTransfer.effectAllowed='move'; } else e.preventDefault(); }
+    function handleFileDragStart(e) { let t = e.target.closest('.file-item'); if(t && t.getAttribute('data-file')==='system32') { draggedItemType='system32'; draggedAppId='system32_file'; e.dataTransfer.setData('text/plain','system32_file'); e.dataTransfer.effectAllowed='move'; e.target.style.opacity='0.6'; } else e.preventDefault(); }
+    function handleFileDragEnd(e) { if(e.target) e.target.style.opacity=''; draggedItemType=null; draggedAppId=null; }
+    function handleDragEnd(e) { draggedItemType=null; draggedAppId=null; }
+    function handleDropOnRecycleBin(e) { e.preventDefault(); if(!draggedItemType) return;
+        if(draggedItemType==='system32') { if(isBsodActive) return; if(openWindows.has('myPC')) { let w=openWindows.get('myPC'); let s=w.querySelector('.file-item[data-file="system32"]'); if(s&&!system32Deleted) { s.remove(); system32Deleted=true; let div=w.querySelector('.window-content'); let warn=document.createElement('div'); warn.style.color='red'; warn.innerHTML='⚠️ System32 DELETED!'; div.appendChild(warn); } } triggerBSOD("System32 Critical Error","Missing: \\System32\\"); draggedItemType=null; draggedAppId=null; return; }
+        if(draggedItemType==='app' && draggedAppId && !deletedApps.includes(draggedAppId) && APP_LIST.some(a=>a.id===draggedAppId)) { deletedApps.push(draggedAppId); if(openWindows.has(draggedAppId)) closeWindowById(draggedAppId); renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBinContent(); }
+        draggedItemType=null; draggedAppId=null;
+    }
+    function refreshRecycleBinContent() { let w=openWindows.get('recycleBin'); if(w) { let c=w.querySelector('.window-content'); if(c) { if(deletedApps.length===0) c.innerHTML='<p>🗑️ Empty.</p>'; else { let h='<h4>Deleted Apps:</h4><ul>'; deletedApps.forEach(id=>{ let a=APP_LIST.find(a=>a.id===id); if(a) h+=`<li>${a.icon} ${a.name} <button data-restore="${id}">Restore</button></li>`; }); h+='</ul>'; c.innerHTML=h; c.querySelectorAll('[data-restore]').forEach(btn=>{ btn.addEventListener('click',()=>{ let id=btn.getAttribute('data-restore'); let idx=deletedApps.indexOf(id); if(idx!==-1) deletedApps.splice(idx,1); renderDesktopIcons(); refreshRecycleBinContent(); }); }); } } } }
+
+    // ---------- BSOD / Chaos ----------
+    function triggerBSOD(title,msg) { if(isBsodActive) return; isBsodActive=true; let d=document.createElement('div'); d.className='bsod-overlay'; d.innerHTML=`<div class="bsod-box"><div class="bsod-title">💀 ${title}</div><div class="bsod-message">${msg}<br>Please repair.</div><div class="bsod-buttons"><button id="repairOption">🔧 Repair</button><button id="turnOffOption">⏻ Turn off</button></div><div id="repairProgressArea" style="display:none;"></div></div>`; document.body.appendChild(d); let repair=d.querySelector('#repairOption'), turnOff=d.querySelector('#turnOffOption'), prog=d.querySelector('#repairProgressArea'); repair.onclick=()=>{ repair.disabled=true; turnOff.disabled=true; prog.style.display='block'; prog.innerHTML=`<div class="repair-animation"><div class="repair-bar" id="repairBarFill"></div></div><p>Repairing...</p>`; let bar=prog.querySelector('#repairBarFill'), w=0; let iv=setInterval(()=>{ w+=5; bar.style.width=w+'%'; if(w>=100){ clearInterval(iv); setTimeout(()=>{ d.remove(); isBsodActive=false; if(system32Deleted&&openWindows.has('myPC')){ let my=openWindows.get('myPC'); let old=my.querySelector('.warning-text'); if(old)old.remove(); let fc=my.querySelector('.file-container')||my; if(!fc.querySelector('.file-item[data-file="system32"]')){ let ns=document.createElement('div'); ns.className='file-item'; ns.setAttribute('data-file','system32'); ns.innerHTML='📁 System32 (Click)'; ns.setAttribute('draggable','true'); ns.addEventListener('dragstart',handleFileDragStart); ns.addEventListener('dragend',handleFileDragEnd); ns.addEventListener('click',()=>openSystem32Code()); fc.prepend(ns); system32Deleted=false; } } alert("Repaired!"); },400); } },50); }; turnOff.onclick=()=>{ repair.disabled=true; turnOff.disabled=true; prog.style.display='block'; prog.innerHTML='<p>Shutting down...</p><div class="repair-animation"><div class="repair-bar"></div></div>'; setTimeout(()=>{ d.style.background='black'; d.innerHTML='<div style="color:white; margin-top:40vh;">Halted.</div>'; },1200); }; }
+    function trigger666Chaos() { if(isBsodActive) return; let chaos=document.createElement('div'); chaos.className='chaos-overlay'; chaos.innerHTML='<div class="error-text">⚠️ 666 SYSTEM CORRUPTION ⚠️</div>'; document.body.appendChild(chaos); for(let i=0;i<30;i++){ let e=document.createElement('div'); e.innerText=`ERROR 0x${Math.floor(Math.random()*9999).toString(16)}`; e.style.position='absolute'; e.style.left=Math.random()*100+'%'; e.style.top=Math.random()*100+'%'; e.style.color='white'; e.style.fontSize='14px'; chaos.appendChild(e); } setTimeout(()=>{ chaos.style.background='black'; chaos.innerHTML='<div class="error-text">Shutting down...</div>'; setTimeout(()=>{ chaos.remove(); triggerBSOD("CODE 666","Forbidden command executed."); },3000); },2000); }
+    function openSystem32Code() { let code=`// Windows 7.5 Fan Edition Kernel\n// System32 Core\nconst kernel = { version:"7.5 FE", build:7601 };\nfunction init() { return "System ready"; }`; let win=createWindow("System32 Source",`<pre style="background:#1e1e1e; color:#d4d4d4; padding:12px;">${code}</pre>`,"system32_code"); document.body.appendChild(win); openWindows.set("system32_code",win); }
+
+    // ---------- Window management ----------
+    function makeDraggable(h,w) { let ox,oy,drag=false; h.addEventListener('mousedown',(e)=>{ if(e.target.closest('.window-controls')) return; drag=true; ox=e.clientX-w.offsetLeft; oy=e.clientY-w.offsetTop; w.style.zIndex=Date.now(); document.addEventListener('mousemove',move); document.addEventListener('mouseup',up); e.preventDefault(); }); function move(e){ if(!drag) return; let l=e.clientX-ox, t=e.clientY-oy; l=Math.min(Math.max(l,0),window.innerWidth-w.offsetWidth); t=Math.min(Math.max(t,0),window.innerHeight-70); w.style.left=l+'px'; w.style.top=t+'px'; } function up(){ drag=false; document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); } }
+    function closeWindowById(id) { if(openWindows.has(id)) { openWindows.get(id).remove(); openWindows.delete(id); } }
+    function createWindow(title,html,id) { let w=document.createElement('div'); w.className='app-window'; w.style.left='100px'; w.style.top='80px'; w.style.zIndex=Date.now(); w.innerHTML=`<div class="window-header"><span>${title}</span><div class="window-controls"><span class="minimize">─</span><span class="close-win">✕</span></div></div><div class="window-content">${html}</div>`; let h=w.querySelector('.window-header'); makeDraggable(h,w); w.querySelector('.close-win').addEventListener('click',()=>{ w.remove(); openWindows.delete(id); }); w.querySelector('.minimize').addEventListener('click',()=>{ w.style.display='none'; }); return w; }
+    function launchApp(id) { if(openWindows.has(id)) { let w=openWindows.get(id); w.style.display='flex'; w.style.zIndex=Date.now(); return; } if(id==='recycleBin'){ createRecycleBinWindow(); return; } let def=APP_LIST.find(a=>a.id===id); if(!def) return; let content=''; if(id==='paint') content=paintUI(); else if(id==='myPC') content=myPCUI(); else if(id==='ie') content=ieUI(); else if(id==='notepad') content=notepadUI(); else if(id==='games') content=gamesUI(); else if(id==='cmd') content=cmdUI(); else return; let win=createWindow(def.name,content,id); document.body.appendChild(win); openWindows.set(id,win); if(id==='paint') initPaint(win); if(id==='games') initGames(win); if(id==='ie') initIESearch(win); if(id==='myPC') attachSys32(win); if(id==='cmd') initCMD(win); }
+    function attachSys32(win) { let s=win.querySelector('.file-item[data-file="system32"]'); if(s){ s.setAttribute('draggable','true'); s.addEventListener('dragstart',handleFileDragStart); s.addEventListener('dragend',handleFileDragEnd); s.addEventListener('click',()=>openSystem32Code()); } }
+    function createRecycleBinWindow() { if(openWindows.has('recycleBin')){ openWindows.get('recycleBin').style.display='flex'; return; } let win=createWindow('Recycle Bin','<div>Loading...</div>','recycleBin'); document.body.appendChild(win); openWindows.set('recycleBin',win); refreshRecycleBinContent(); }
+
+    // ---------- ENHANCED PAINT (brush size, shapes, fill, eraser) ----------
+    function paintUI() { return `<div class="paint-toolbar"><select id="paintTool"><option value="brush">Brush</option><option value="eraser">Eraser</option><option value="rect">Rectangle</option><option value="circle">Circle</option><option value="line">Line</option><option value="fill">Fill Bucket</option></select><input type="color" id="paintColor" value="#000000"><input type="range" id="brushSize" min="1" max="20" value="4"><button id="clearCanvas">Clear</button></div><canvas class="paint-canvas" width="500" height="350" style="width:100%; height:350px; background:white; border:1px solid #aaa;"></canvas>`; }
+    function initPaint(win) {
+        let canvas = win.querySelector('.paint-canvas'), ctx = canvas.getContext('2d');
+        canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
+        ctx.fillStyle = 'white'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        let painting = false, tool = 'brush', color = '#000000', brushSize = 4;
+        let startX, startY;
+        const toolSelect = win.querySelector('#paintTool'), colorPicker = win.querySelector('#paintColor'), sizeSlider = win.querySelector('#brushSize');
+        toolSelect.onchange = () => { tool = toolSelect.value; };
+        colorPicker.oninput = () => { color = colorPicker.value; };
+        sizeSlider.oninput = () => { brushSize = parseInt(sizeSlider.value); };
+        function drawDot(x,y) { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x,y,brushSize/2,0,Math.PI*2); ctx.fill(); }
+        function drawRect(x1,y1,x2,y2) { ctx.fillStyle = color; ctx.fillRect(Math.min(x1,x2), Math.min(y1,y2), Math.abs(x2-x1), Math.abs(y2-y1)); }
+        function drawCircle(x1,y1,x2,y2) { let r = Math.hypot(x2-x1, y2-y1); ctx.beginPath(); ctx.arc(x1,y1,r,0,Math.PI*2); ctx.fillStyle = color; ctx.fill(); }
+        function drawLine(x1,y1,x2,y2) { ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.strokeStyle = color; ctx.lineWidth = brushSize; ctx.stroke(); }
+        function floodFill(x,y, targetColor, fillColor) {
+            let imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+            let data = imageData.data;
+            function match(pixelIndex) { return data[pixelIndex]===targetColor.r && data[pixelIndex+1]===targetColor.g && data[pixelIndex+2]===targetColor.b && data[pixelIndex+3]===targetColor.a; }
+            let target = { r: targetColor[0], g: targetColor[1], b: targetColor[2], a: targetColor[3] };
+            let fill = { r: fillColor[0], g: fillColor[1], b: fillColor[2], a: fillColor[3] };
+            let stack = [{x,y}];
+            while(stack.length) {
+                let {x:cx, y:cy} = stack.pop();
+                if(cx<0 || cy<0 || cx>=canvas.width || cy>=canvas.height) continue;
+                let idx = (cy*canvas.width + cx)*4;
+                if(match(idx)) {
+                    data[idx]=fill.r; data[idx+1]=fill.g; data[idx+2]=fill.b; data[idx+3]=fill.a;
+                    stack.push({x:cx+1,y:cy},{x:cx-1,y:cy},{x:cx,y:cy+1},{x:cx,y:cy-1});
+                }
+            }
+            ctx.putImageData(imageData,0,0);
+        }
+        function getPixelColor(x,y) {
+            let pixel = ctx.getImageData(x,y,1,1).data;
+            return [pixel[0],pixel[1],pixel[2],pixel[3]];
+        }
+        canvas.addEventListener('mousedown', (e) => {
+            let rect = canvas.getBoundingClientRect(), sx = canvas.width/rect.width, sy = canvas.height/rect.height;
+            let mx = (e.clientX - rect.left)*sx, my = (e.clientY - rect.top)*sy;
+            if(tool === 'fill') {
+                let targetColor = getPixelColor(mx,my);
+                let fillColor = ctx.fillStyle; ctx.fillStyle = color;
+                let fillArr = [parseInt(color.slice(1,3),16), parseInt(color.slice(3,5),16), parseInt(color.slice(5,7),16), 255];
+                floodFill(mx,my,targetColor,fillArr);
+                return;
+            }
+            painting = true;
+            startX = mx; startY = my;
+            if(tool === 'brush' || tool === 'eraser') {
+                ctx.fillStyle = (tool === 'eraser') ? 'white' : color;
+                drawDot(mx,my);
+            }
+        });
+        canvas.addEventListener('mousemove', (e) => {
+            if(!painting) return;
+            let rect = canvas.getBoundingClientRect(), sx = canvas.width/rect.width, sy = canvas.height/rect.height;
+            let mx = (e.clientX - rect.left)*sx, my = (e.clientY - rect.top)*sy;
+            if(tool === 'brush') { ctx.fillStyle = color; drawDot(mx,my); }
+            else if(tool === 'eraser') { ctx.fillStyle = 'white'; drawDot(mx,my); }
+        });
+        canvas.addEventListener('mouseup', (e) => {
+            if(!painting) return;
+            let rect = canvas.getBoundingClientRect(), sx = canvas.width/rect.width, sy = canvas.height/rect.height;
+            let mx = (e.clientX - rect.left)*sx, my = (e.clientY - rect.top)*sy;
+            if(tool === 'rect') { drawRect(startX,startY,mx,my); }
+            else if(tool === 'circle') { drawCircle(startX,startY,mx,my); }
+            else if(tool === 'line') { drawLine(startX,startY,mx,my); }
+            painting = false;
+        });
+        win.querySelector('#clearCanvas').onclick = () => { ctx.fillStyle = 'white'; ctx.fillRect(0,0,canvas.width,canvas.height); };
+    }
+
+    // ---------- Other apps (My PC, Notepad, Games, IE, CMD) with AI and URL redirects ----------
+    function myPCUI(){ return `<div class="file-container"><h3>Local Disk (C:)</h3><div style="display:flex; gap:15px; flex-wrap:wrap; margin-top:10px;"><div class="file-item" data-file="system32">📁 System32 (Click to view)</div><div>📄 Documents</div><div>📷 Pictures</div><div>🎵 Music</div></div></div>`; }
+    function notepadUI(){ return `<textarea style="width:100%; height:280px;" placeholder="Write..."></textarea><div><button>Save</button></div>`; }
+    function gamesUI(){ return `<div><select id="gameSelect"><option value="snake">Snake</option><option value="tictactoe">Tic-Tac-Toe</option><option value="pong">Pong</option></select><button id="resetGame">New</button></div><canvas id="gameCanvas" width="400" height="300" style="background:#1a2a1f;"></canvas><div id="gameStatus">Score:0</div>`; }
+    let curGame='snake', gameInt=null, pongInt=null;
+    function initGames(win){ let canvas=win.querySelector('#gameCanvas'), ctx=canvas.getContext('2d'), sel=win.querySelector('#gameSelect'), reset=win.querySelector('#resetGame'), status=win.querySelector('#gameStatus'); function stop(){ if(gameInt)clearInterval(gameInt); if(pongInt)clearInterval(pongInt); gameInt=null; pongInt=null; } function snake(){ stop(); let snake=[{x:10,y:10}], dir='RIGHT', food={x:15,y:10}, score=0; function draw(){ ctx.fillStyle='#1a2a1f'; ctx.fillRect(0,0,canvas.width,canvas.height); for(let i=0;i<snake.length;i++){ ctx.fillStyle=i===0?'#7ed957':'#3b8c2a'; ctx.fillRect(snake[i].x*20,snake[i].y*20,18,18); } ctx.fillStyle='#ff5252'; ctx.fillRect(food.x*20,food.y*20,18,18); status.innerText=`Score:${score}`; } function update(){ let head={...snake[0]}; if(dir==='RIGHT')head.x++; if(dir==='LEFT')head.x--; if(dir==='UP')head.y--; if(dir==='DOWN')head.y++; if(head.x<0||head.y<0||head.x>=20||head.y>=20||snake.some(s=>s.x===head.x&&s.y===head.y)){ clearInterval(gameInt); gameInt=null; status.innerText='Game Over'; return; } snake.unshift(head); if(head.x===food.x&&head.y===food.y){ score++; food={x:Math.floor(Math.random()*20),y:Math.floor(Math.random()*20)}; status.innerText=`Score:${score}`; }else snake.pop(); draw(); } function key(e){ if(e.key==='ArrowUp'&&dir!=='DOWN')dir='UP'; else if(e.key==='ArrowDown'&&dir!=='UP')dir='DOWN'; else if(e.key==='ArrowLeft'&&dir!=='RIGHT')dir='LEFT'; else if(e.key==='ArrowRight'&&dir!=='LEFT')dir='RIGHT'; } window.removeEventListener('keydown',window._snk); window._snk=key; window.addEventListener('keydown',window._snk); draw(); gameInt=setInterval(update,130); } function ttt(){ stop(); let board=Array(9).fill(null), turn='X', over=false; function draw(){ ctx.fillStyle='#2c3e2b'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.strokeStyle='white'; for(let i=1;i<3;i++){ ctx.beginPath(); ctx.moveTo(i*133,0); ctx.lineTo(i*133,canvas.height); ctx.stroke(); ctx.moveTo(0,i*100); ctx.lineTo(canvas.width,i*100); ctx.stroke(); } for(let i=0;i<9;i++){ if(board[i]){ let x=(i%3)*133+40, y=Math.floor(i/3)*100+50; ctx.font='48px Arial'; ctx.fillStyle=board[i]==='X'?'#ffaa66':'#66ccff'; ctx.fillText(board[i],x,y+10); } } status.innerText=`Turn:${turn}${over?' Game Over':''}`; } function winCheck(){ let l=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; for(let ll of l){ if(board[ll[0]]&&board[ll[0]]===board[ll[1]]&&board[ll[1]]===board[ll[2]])return board[ll[0]]; } if(board.every(v=>v!==null))return 'tie'; return null; } function handleClick(e){ if(over)return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy; let col=Math.floor(mx/133), row=Math.floor(my/100); if(col>=0&&col<3&&row>=0&&row<3){ let idx=row*3+col; if(!board[idx]&&!over){ board[idx]=turn; let w=winCheck(); if(w){ over=true; status.innerText=w==='tie'?'Tie!':`${w} wins!`; draw(); return; } turn=turn==='X'?'O':'X'; draw(); if(!over&&turn==='O'){ let empty=board.reduce((arr,v,i)=>v===null?[...arr,i]:arr,[]); if(empty.length){ let ai=empty[Math.floor(Math.random()*empty.length)]; board[ai]='O'; w=winCheck(); if(w){ over=true; status.innerText=w==='tie'?'Tie!':`${w} wins!`; draw(); return; } turn='X'; draw(); } } } } } canvas.removeEventListener('click',window._ttt); window._ttt=handleClick; canvas.addEventListener('click',window._ttt); draw(); } function pong(){ stop(); let ballX=canvas.width/2,ballY=canvas.height/2,ballDX=2,ballDY=2,paddleY=canvas.height/2-40,aiY=canvas.height/2-40,ps=0,as=0; function draw(){ ctx.fillStyle='#1a2a1f'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='white'; ctx.fillRect(10,paddleY,10,80); ctx.fillRect(canvas.width-20,aiY,10,80); ctx.beginPath(); ctx.arc(ballX,ballY,6,0,Math.PI*2); ctx.fill(); status.innerText=`Player:${ps} AI:${as}`; } function update(){ ballX+=ballDX; ballY+=ballDY; if(ballY<0||ballY>canvas.height)ballDY=-ballDY; if(ballX<20&&ballX>10&&ballY>paddleY&&ballY<paddleY+80)ballDX=-ballDX; if(ballX>canvas.width-25&&ballX<canvas.width-10&&ballY>aiY&&ballY<aiY+80)ballDX=-ballDX; if(ballX<0){ as++; reset(); } if(ballX>canvas.width){ ps++; reset(); } let aiCenter=aiY+40; if(aiCenter<ballY-20)aiY+=3; else if(aiCenter>ballY+20)aiY-=3; aiY=Math.min(Math.max(aiY,0),canvas.height-80); draw(); } function reset(){ ballX=canvas.width/2; ballY=canvas.height/2; ballDX=(Math.random()>0.5?2:-2); ballDY=(Math.random()>0.5?2:-2); } function movePaddle(e){ let rect=canvas.getBoundingClientRect(); let my=(e.clientY-rect.top)*(canvas.height/rect.height); paddleY=Math.min(Math.max(my-40,0),canvas.height-80); } canvas.removeEventListener('mousemove',window._pong); window._pong=movePaddle; canvas.addEventListener('mousemove',window._pong); pongInt=setInterval(update,1000/60); draw(); } function switchGame(){ curGame=sel.value; stop(); if(curGame==='snake')snake(); else if(curGame==='tictactoe')ttt(); else pong(); } sel.addEventListener('change',switchGame); reset.addEventListener('click',switchGame); switchGame(); }
+
+    // IE with AI and special URL redirects (sprunki, retrocore, youtube, google, 666)
+    function ieUI() { return `<div class="ie-header"><div><input id="ieSearch" placeholder="Search or type keyword..." style="width:220px;"><button id="ieSearchBtn">Go</button></div><div class="ai-chat-icon" id="aiIcon">🤖</div></div><div id="ieResults" style="height:180px; overflow:auto;">Try: sprunki, retrocore, youtube, google, 666</div><div id="aiPanel" style="display:none;" class="ai-chat-panel"><div class="chat-messages" id="chatMsgs"><div>🤖 AI: Hi! I'm your intelligent assistant. Ask me anything!</div></div><div class="chat-input-area"><input id="chatIn" placeholder="Say anything..." class="chat-input"><button id="chatSend">Send</button></div></div>`; }
+    function initIESearch(win) {
+        let searchInp=win.querySelector('#ieSearch'), searchBtn=win.querySelector('#ieSearchBtn'), results=win.querySelector('#ieResults');
+        let aiIcon=win.querySelector('#aiIcon'), aiPanel=win.querySelector('#aiPanel'), chatMsgs=win.querySelector('#chatMsgs'), chatInp=win.querySelector('#chatIn'), chatSend=win.querySelector('#chatSend');
+        let aiVisible=false;
+        aiIcon.onclick=()=>{ aiVisible=!aiVisible; aiPanel.style.display=aiVisible?'block':'none'; if(aiVisible)chatInp.focus(); };
+        function detectLanguage(text) { let p={ es:/(hola|como|qué|gracias)/i, fr:/(bonjour|merci)/i, de:/(hallo|danke)/i, it:/(ciao|grazie)/i, pt:/(olá|obrigado)/i, ru:/(привет|спасибо)/i }; for(let [l,pat] of Object.entries(p)) if(pat.test(text)) return l; return 'en'; }
+        function getSmartResponse(msg,lang){ msg=msg.toLowerCase(); if(msg.includes('paint')) return "🎨 Paint now has brush sizes, shapes, fill bucket, and eraser!"; if(msg.includes('game')) return "🎮 Try Snake, Tic-Tac-Toe, or Pong!"; if(msg.includes('cmd')) return "💻 CMD has open/delete/restart/shutdown and 666."; if(msg.includes('system32')) return "📁 System32 shows kernel code. Deleting it crashes the PC!"; if(msg.includes('666')) return "⚠️ 666 is forbidden! It triggers chaos and BSOD."; return "😊 I'm here to help! Ask about Paint, Games, CMD, or try special URLs like 'sprunki'!"; }
+        function addMsg(sender,text,isBot=true){ let d=document.createElement('div'); d.style.margin='5px 0'; d.style.color=isBot?'#2c5a3e':'#0066cc'; d.innerHTML=`<b>${isBot?'🤖 AI':'👤 You'}:</b> ${text}`; chatMsgs.appendChild(d); chatMsgs.scrollTop=chatMsgs.scrollHeight; }
+        async function handleChat(){ let msg=chatInp.value.trim(); if(!msg)return; addMsg(false,msg,false); chatInp.value=''; let lang=detectLanguage(msg); let reply=getSmartResponse(msg,lang); setTimeout(()=>addMsg(true,reply),150); }
+        chatSend.onclick=handleChat; chatInp.addEventListener('keypress',(e)=>{ if(e.key==='Enter')handleChat(); });
+        async function handleSearch() {
+            let query = searchInp.value.trim().toLowerCase();
+            if(!query) return;
+            const specials = { 'sprunki':'https://sprunki.com/', 'retrocore':'https://krisxxxllkrisipurvanov-cpu.github.io/RetroCore/', 'youtube':'https://www.youtube.com/', 'google':'https://www.google.com/' };
+            if(specials[query]) { window.open(specials[query], '_blank'); results.innerHTML = `🔗 Opening ${query} in new tab...`; return; }
+            if(query === '666') { results.innerHTML = `<span style="color:red; font-weight:bold;">⚠️ Don't look out your window at 3am... ⚠️</span>`; return; }
+            results.innerHTML = 'Searching Wikipedia...';
+            try { let url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*`; let resp = await fetch(url); let data = await resp.json(); let searches = data.query.search; if(searches.length===0) results.innerHTML='No results.'; else { let html='<ul>'; searches.slice(0,6).forEach(s=>{ html+=`<li><b>${s.title}</b><br>${s.snippet}...</li><hr>`; }); html+='</ul>'; results.innerHTML=html; } } catch(e){ results.innerHTML='Error.'; }
+        }
+        searchBtn.onclick = handleSearch; searchInp.addEventListener('keypress', (e)=>{ if(e.key==='Enter') handleSearch(); });
+    }
+
+    // CMD implementation (unchanged but functional)
+    function cmdUI() { return `<div class="cmd-output" id="cmdOut">Windows 7.5 CMD<br>Type 'help'<br><br></div><div class="cmd-input-line"><span class="cmd-prompt">C:\\></span><input id="cmdInp" class="cmd-input"></div>`; }
+    function initCMD(win) { let out=win.querySelector('#cmdOut'), inp=win.querySelector('#cmdInp'); function add(t,e=false){ let d=document.createElement('div'); d.style.color=e?'#f66':'#0f0'; d.innerHTML=t; out.appendChild(d); out.scrollTop=out.scrollHeight; } function proc(c){ c=c.trim().toLowerCase(); if(c==='help'){ add("Commands: open [app], delete [app], restart pc, shutdown pc, 666"); add("Apps: paint, mypc, ie, notepad, games, cmd"); return; } if(c.startsWith('open ')){ let an=c.substring(5).trim(); let map={'paint':'paint','mypc':'myPC','ie':'ie','notepad':'notepad','games':'games','cmd':'cmd'}; let id=map[an]; if(id&&APP_LIST.some(a=>a.id===id)){ if(!deletedApps.includes(id)){ launchApp(id); add(`Opening ${an}...`); }else add(`Error: ${an} deleted.`,true); }else add(`Unknown app.`,true); return; } if(c.startsWith('delete ')){ let an=c.substring(7).trim(); let map={'paint':'paint','mypc':'myPC','ie':'ie','notepad':'notepad','games':'games','cmd':'cmd'}; let id=map[an]; if(id&&APP_LIST.some(a=>a.id===id)){ if(!deletedApps.includes(id)){ deletedApps.push(id); if(openWindows.has(id))closeWindowById(id); renderDesktopIcons(); if(openWindows.has('recycleBin'))refreshRecycleBinContent(); add(`${an} deleted.`); }else add(`${an} already in bin.`,true); }else add(`Cannot delete ${an}.`,true); return; } if(c==='restart pc'){ add("Restarting..."); setTimeout(()=>restart(),500); return; } if(c==='shutdown pc'){ add("Shutting down..."); setTimeout(()=>shutdown(),500); return; } if(c==='666'){ add("⚠️ FORBIDDEN! CHAOS ENGAGED ⚠️",true); setTimeout(()=>trigger666Chaos(),100); return; } add(`'${c}' not recognized.`,true); } inp.addEventListener('keypress',(e)=>{ if(e.key==='Enter'){ let cmd=inp.value; if(cmd.trim()){ add(`C:\\> ${cmd}`); proc(cmd); } inp.value=''; } }); }
+
+    // ---------- ENHANCED SETTINGS (icon size, taskbar auto-hide, theme presets) ----------
+    function openSettings() {
+        if(openWindows.has('settings')) closeWindowById('settings');
+        let html = `<div><label>Icon Size: <input type="range" id="iconSizeSlider" min="50" max="120" value="${iconSize}"></label><br>
+        <label>Taskbar Auto-Hide: <input type="checkbox" id="autoHideCheck" ${taskbarAutoHide ? 'checked' : ''}></label><br>
+        <label>Desktop Theme:</label><select id="themeSelect"><option value="green">Classic Green</option><option value="blue">Windows Blue</option><option value="dark">Dark Mode</option></select><br>
+        <button id="applySettingsBtn">Apply</button></div>`;
+        let win = createWindow('Settings', html, 'settings');
+        document.body.appendChild(win); openWindows.set('settings', win);
+        win.querySelector('#applySettingsBtn').onclick = () => {
+            iconSize = parseInt(win.querySelector('#iconSizeSlider').value);
+            taskbarAutoHide = win.querySelector('#autoHideCheck').checked;
+            let theme = win.querySelector('#themeSelect').value;
+            if(theme === 'green') desktopBgColor = "#1b4d2e";
+            else if(theme === 'blue') desktopBgColor = "#1e3a5f";
+            else if(theme === 'dark') desktopBgColor = "#0a0f1a";
+            applyDesktopSettings();
+            renderDesktopIcons(); // refresh icon sizes
+        };
+    }
+
+    // ---------- Run dialog ----------
+    function showRunDialog() {
+        let cmd = prompt("Type a command:\n- open [app]\n- delete [app]\n- restart pc\n- shutdown pc\n- 666\n- folder name (creates folder)");
+        if(!cmd) return;
+        let lower = cmd.trim().toLowerCase();
+        if(lower.startsWith('open ')) { let an = lower.substring(5); let map={'paint':'paint','mypc':'myPC','ie':'ie','notepad':'notepad','games':'games','cmd':'cmd'}; if(map[an]) launchApp(map[an]); else alert("Unknown app"); }
+        else if(lower.startsWith('delete ')) { let an = lower.substring(7); let map={'paint':'paint','mypc':'myPC','ie':'ie','notepad':'notepad','games':'games','cmd':'cmd'}; if(map[an] && !deletedApps.includes(map[an])) { deletedApps.push(map[an]); if(openWindows.has(map[an])) closeWindowById(map[an]); renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBinContent(); alert(`Deleted ${an}`); } else alert("Cannot delete"); }
+        else if(lower === 'restart pc') restart();
+        else if(lower === 'shutdown pc') shutdown();
+        else if(lower === '666') trigger666Chaos();
+        else { createNewFolder(); alert(`Created folder: ${cmd}`); }
+    }
+
+    // ---------- Shutdown, Restart, Clock ----------
+    function shutdown() { bootScreen.style.display='flex'; desktopDiv.style.display='none'; bootScreen.style.opacity='1'; alert("Shutdown."); }
+    function restart() { bootScreen.style.display='flex'; desktopDiv.style.display='none'; setTimeout(()=>location.reload(),800); }
+    function updateClock() { clockSpan.innerText=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+    setInterval(updateClock,1000);
+
+    // ---------- Start menu event bindings ----------
+    startBtn.addEventListener('click',(e)=>{ e.stopPropagation(); startMenu.classList.toggle('show'); });
+    document.addEventListener('click',(e)=>{ if(!startMenu.contains(e.target)&&e.target!==startBtn) startMenu.classList.remove('show'); });
+    document.querySelectorAll('[data-app]').forEach(el=>{ el.addEventListener('click',()=>{ launchApp(el.getAttribute('data-app')); startMenu.classList.remove('show'); }); });
+    document.querySelectorAll('[data-folder]').forEach(el=>{ el.addEventListener('click',()=>{ createNewFolder(); startMenu.classList.remove('show'); }); });
+    document.getElementById('runBtn').addEventListener('click',()=>{ showRunDialog(); startMenu.classList.remove('show'); });
+    document.getElementById('settingsBtn').addEventListener('click',()=>{ openSettings(); startMenu.classList.remove('show'); });
+    document.getElementById('shutdownBtn').addEventListener('click',()=>{ shutdown(); startMenu.classList.remove('show'); });
+    document.getElementById('restartBtn').addEventListener('click',()=>{ restart(); startMenu.classList.remove('show'); });
+
+    // ---------- Boot sequence ----------
+    setTimeout(()=>{ bootScreen.style.opacity='0'; setTimeout(()=>{ bootScreen.style.display='none'; desktopDiv.style.display='block'; renderDesktopIcons(); },600); },2600);
+</script>
+</body>
+</html>
