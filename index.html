@@ -15,6 +15,7 @@
         .boot-progress { width: 0%; height: 100%; background: linear-gradient(90deg, #3bc9ff, #0066cc); border-radius: 10px; animation: bootProgress 2.5s ease forwards; }
         @keyframes bootProgress { 0% { width: 0%; } 100% { width: 100%; } }
         .boot-text { font-size: 0.85rem; color: #9aaebf; }
+        .sound-message { margin-top: 20px; background: rgba(0,0,0,0.6); padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; display: none; }
         .desktop { display: none; width: 100%; height: 100%; background: #1b4d2e; position: relative; overflow: hidden; transition: background-color 0.2s, background-image 0.2s; background-size: cover; background-position: center; }
         .desktop-icons { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; }
         .desktop-icon { position: absolute; display: flex; flex-direction: column; align-items: center; width: 80px; cursor: pointer; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 6px 4px; color: white; text-shadow: 0 1px 2px black; backdrop-filter: blur(2px); transition: left 0.1s, top 0.1s; }
@@ -32,7 +33,7 @@
         .taskbar-app-btn:hover { background: rgba(255,255,255,0.3); }
         .internet-status { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.4); padding: 4px 10px; border-radius: 20px; color: white; font-size: 12px; cursor: pointer; }
         .taskbar-time { color: white; font-size: 13px; background: rgba(0,0,0,0.4); padding: 4px 12px; border-radius: 20px; font-family: monospace; white-space: nowrap; }
-        .start-menu { position: absolute; bottom: 55px; left: 10px; width: 400px; background: rgba(20, 30, 35, 0.96); backdrop-filter: blur(20px); border-radius: 12px; border: 1px solid #3a5e6e; z-index: 1100; display: none; flex-direction: column; padding: 12px 0; }
+        .start-menu { position: absolute; bottom: 55px; left: 10px; width: 420px; background: rgba(20, 30, 35, 0.96); backdrop-filter: blur(20px); border-radius: 12px; border: 1px solid #3a5e6e; z-index: 1100; display: none; flex-direction: column; padding: 12px 0; }
         .start-menu.show { display: flex; }
         .start-header { padding: 8px 16px; border-bottom: 1px solid #3a5e6e; color: #eef4ff; font-weight: bold; }
         .start-items { list-style: none; padding: 6px 0; max-height: 400px; overflow-y: auto; }
@@ -83,6 +84,7 @@
         .calendar th, .calendar td { padding: 8px; border: 1px solid #aaa; }
         .calendar .today { background: #ffaa66; }
         .reset-warning { color: #ff6666; font-weight: bold; margin-top: 15px; border-top: 1px solid #aaa; padding-top: 10px; }
+        .account-locked { background: #f0f0e0; text-align: center; padding: 40px; color: #666; }
     </style>
 </head>
 <body>
@@ -91,6 +93,7 @@
     <div class="boot-sub">created by KrisXxXLL</div>
     <div class="boot-animation"><div class="boot-progress"></div></div>
     <div class="boot-text">Loading secure server environment...</div>
+    <div class="sound-message" id="bootSoundMsg">🔊 Click to play startup sound</div>
 </div>
 
 <div class="desktop" id="desktop">
@@ -113,6 +116,7 @@
             <li id="aiChatBtn">🤖 AI Chat</li>
             <li id="calendarBtn">📅 Calendar</li>
             <li id="calculatorBtn">🧮 Calculator</li>
+            <li id="msAccountBtn">👤 Microsoft Account</li>
             <div class="divider"></div>
             <li data-folder="documents">📄 Documents</li>
             <li id="picturesBtn">🖼️ Pictures</li>
@@ -127,7 +131,150 @@
 </div>
 
 <script>
-    // ==================== PERSISTENT STORAGE ====================
+    // ==================== PERSISTENT STORAGE & ACCOUNT SYSTEM ====================
+    let loggedIn = false;
+    let accountUsername = "";
+    let accountPassword = "";
+
+    function loadAccount() {
+        const saved = localStorage.getItem('win2026_account');
+        if (saved) {
+            try {
+                const acc = JSON.parse(saved);
+                if (acc.username && acc.password) {
+                    loggedIn = true;
+                    accountUsername = acc.username;
+                    accountPassword = acc.password;
+                } else {
+                    loggedIn = false;
+                }
+            } catch(e) { loggedIn = false; }
+        } else {
+            loggedIn = false;
+        }
+    }
+
+    function saveAccount() {
+        if (loggedIn && accountUsername && accountPassword) {
+            localStorage.setItem('win2026_account', JSON.stringify({ username: accountUsername, password: accountPassword }));
+        } else {
+            localStorage.removeItem('win2026_account');
+        }
+    }
+
+    function createAccount(username, password) {
+        if (!username || !password) return false;
+        accountUsername = username;
+        accountPassword = password;
+        loggedIn = true;
+        saveAccount();
+        return true;
+    }
+
+    function changePassword(newPassword) {
+        if (!loggedIn) return false;
+        accountPassword = newPassword;
+        saveAccount();
+        return true;
+    }
+
+    function deleteAccount() {
+        loggedIn = false;
+        accountUsername = "";
+        accountPassword = "";
+        localStorage.removeItem('win2026_account');
+        for (let [winId, info] of openWindows.entries()) {
+            if (winId.startsWith('office_') || winId.startsWith('store_')) {
+                info.windowElement.remove();
+                openWindows.delete(winId);
+            }
+        }
+        updateTaskbarButtons();
+        alert("Account deleted. Microsoft Office and Store are now locked.");
+    }
+
+    function logoutAccount() {
+        loggedIn = false;
+        accountUsername = "";
+        accountPassword = "";
+        localStorage.removeItem('win2026_account');
+        for (let [winId, info] of openWindows.entries()) {
+            if (winId.startsWith('office_') || winId.startsWith('store_')) {
+                info.windowElement.remove();
+                openWindows.delete(winId);
+            }
+        }
+        updateTaskbarButtons();
+        alert("Logged out. Microsoft Office and Store are now locked.");
+    }
+
+    // --- BOOT SOUND ---
+    let bootAudio = null;
+    function playBootSound() {
+        if (bootAudio) {
+            bootAudio.play().catch(e => console.log("Autoplay blocked:", e));
+        }
+    }
+
+    // --- MICROSOFT ACCOUNT UI (Start menu) with Logout button ---
+    function openMicrosoftAccountUI() {
+        if (loggedIn) {
+            const win = createWindow("Microsoft Account", `
+                <div style="padding:10px;">
+                    <h3>Account Information</h3>
+                    <p>Username: <strong>${escapeHtml(accountUsername)}</strong></p>
+                    <p>Status: <span style="color:green;">✓ Active</span></p>
+                    <button id="changePassBtn">Change Password</button>
+                    <button id="deleteAccountBtn" style="background:#aa3333; color:white;">Delete Account</button>
+                    <button id="logoutBtn" style="background:#555; color:white;">Logout</button>
+                    <p style="margin-top:15px;"><i>Office and Store apps are unlocked.</i></p>
+                </div>
+            `, "msAccount_view");
+            document.body.appendChild(win);
+            win.querySelector('#changePassBtn').onclick = () => {
+                let newPass = prompt("Enter new password:");
+                if (newPass && newPass.length > 0) {
+                    changePassword(newPass);
+                    alert("Password changed successfully!");
+                    win.close();
+                } else alert("Invalid password.");
+            };
+            win.querySelector('#deleteAccountBtn').onclick = () => {
+                if (confirm("Delete your Microsoft Account? This will lock Office and Store.")) {
+                    deleteAccount();
+                    win.close();
+                }
+            };
+            win.querySelector('#logoutBtn').onclick = () => {
+                logoutAccount();
+                win.close();
+            };
+        } else {
+            const win = createWindow("Microsoft Account", `
+                <div style="padding:10px;">
+                    <h3>Create Microsoft Account</h3>
+                    <input type="text" id="newUsername" placeholder="Username" style="width:100%; margin-bottom:8px;"><br>
+                    <input type="password" id="newPassword" placeholder="Password" style="width:100%; margin-bottom:8px;"><br>
+                    <button id="createAccBtn">Create Account</button>
+                    <p style="margin-top:15px;"><i>After creating an account, you can use Microsoft Office and Microsoft Store.</i></p>
+                </div>
+            `, "msAccount_create");
+            document.body.appendChild(win);
+            win.querySelector('#createAccBtn').onclick = () => {
+                let user = win.querySelector('#newUsername').value.trim();
+                let pass = win.querySelector('#newPassword').value.trim();
+                if (user && pass) {
+                    createAccount(user, pass);
+                    alert(`Account "${user}" created! You can now use Office and Store.`);
+                    win.close();
+                } else {
+                    alert("Please enter both username and password.");
+                }
+            };
+        }
+    }
+
+    // --- CORE VARIABLES (keep existing) ---
     function saveState() {
         const state = {
             deletedApps,
@@ -149,7 +296,10 @@
             animations,
             accentColor,
             taskbarTransparency,
-            showHiddenFiles
+            showHiddenFiles,
+            doubleClickSpeed,
+            windowOpacity,
+            mouseStyle
         };
         localStorage.setItem('win2026_state', JSON.stringify(state));
     }
@@ -178,6 +328,9 @@
             accentColor = state.accentColor || "#2c5a3e";
             taskbarTransparency = state.taskbarTransparency !== undefined ? state.taskbarTransparency : 0.92;
             showHiddenFiles = state.showHiddenFiles || false;
+            doubleClickSpeed = state.doubleClickSpeed || 500;
+            windowOpacity = state.windowOpacity !== undefined ? state.windowOpacity : 1;
+            mouseStyle = state.mouseStyle || "default";
             downloadedGames = (state.downloadedGames || []).map(g => {
                 const def = storeGames.find(sg => sg.id === g.id);
                 if (def) {
@@ -192,47 +345,22 @@
             }).filter(g => g);
             applyWallpaper();
             applyAccentAndTaskbar();
+            applyExtraSettings();
             return true;
         } catch(e) { console.warn("Failed to load state", e); return false; }
     }
 
+    function applyExtraSettings() {
+        document.body.style.cursor = mouseStyle;
+        document.querySelectorAll('.app-window').forEach(win => {
+            win.style.opacity = windowOpacity;
+        });
+    }
+
     function resetAllData() {
         if (!confirm("⚠️ Reset this PC will erase all your installed games, folders, files, office projects, and settings. This action cannot be undone. Are you sure?")) return;
-        // Clear all mutable state
-        deletedApps = [];
-        deletedDownloadedGames = [];
-        customFolders = [];
-        desktopFiles = [];
-        appPositions = {};
-        officeProjects = [];
-        downloadedGames = [];
-        wallpaperUrl = null;
-        wallpaperDataURL = null;
-        desktopBgColor = "#1b4d2e";
-        taskbarAutoHide = false;
-        iconSize = 80;
-        iconSpacing = 100;
-        taskbarHeight = 48;
-        fontSize = 13;
-        borderRadius = 12;
-        animations = true;
-        accentColor = "#2c5a3e";
-        taskbarTransparency = 0.92;
-        showHiddenFiles = false;
-        // Close all open windows
-        for (let [winId, info] of openWindows.entries()) {
-            if (info.windowElement) info.windowElement.remove();
-        }
-        openWindows.clear();
-        updateTaskbarButtons();
-        // Reset wallpaper and background
-        applyWallpaper();
-        applyAccentAndTaskbar();
-        // Re-render desktop icons
-        renderDesktopIcons();
-        // Save empty state
-        saveState();
-        alert("Your PC has been reset. All data erased.");
+        localStorage.clear();
+        location.reload();
     }
 
     function autoSave() { saveState(); }
@@ -249,7 +377,7 @@
     const originalRestoreAllApps = restoreAllApps;
     window.restoreAllApps = function() { originalRestoreAllApps(); saveState(); };
 
-    // --- CORE VARIABLES ---
+    // --- APP LISTS (unchanged) ---
     const APP_LIST = [
         { id: "paint", name: "Paint", icon: "🎨", desktop: true },
         { id: "myPC", name: "My PC", icon: "💻", desktop: true },
@@ -262,6 +390,7 @@
         { id: "recycleBin", name: "Recycle Bin", icon: "🗑️", desktop: false }
     ];
     let deletedApps = [], deletedDownloadedGames = [], openWindows = new Map(), desktopBgColor = "#1b4d2e", wallpaperUrl = null, wallpaperDataURL = null, taskbarAutoHide = false, iconSize = 80, iconSpacing = 100, taskbarHeight = 48, fontSize = 13, borderRadius = 12, animations = true, accentColor = "#2c5a3e", taskbarTransparency = 0.92, showHiddenFiles = false;
+    let doubleClickSpeed = 500, windowOpacity = 1, mouseStyle = "default";
     let isBsodActive = false, system32Deleted = false;
     let customFolders = [], desktopFiles = [], appPositions = {}, downloadedGames = [];
     let officeProjects = [];
@@ -272,7 +401,7 @@
     const startBtn = document.getElementById('startBtn'), clockSpan = document.getElementById('clock'), taskbar = document.getElementById('taskbar');
     const taskbarItemsDiv = document.getElementById('taskbarItems'), internetStatusDiv = document.getElementById('internetStatus');
 
-    // --- WALLPAPER & ACCENT FUNCTIONS ---
+    // --- WALLPAPER & ACCENT (same as before) ---
     function applyWallpaper() {
         if (wallpaperUrl) {
             desktopDiv.style.backgroundImage = `url(${wallpaperUrl})`;
@@ -301,7 +430,7 @@
         return `rgb(${R}, ${G}, ${B})`;
     }
 
-    // --- INTERNET & CLOCK ---
+    // --- INTERNET & CLOCK (unchanged) ---
     function updateInternetStatus() { let ping = Math.floor(Math.random() * 112) + 8; let q = ping<=20?"Excellent":ping<=50?"Good":ping<=80?"Fair":"Slow"; internetStatusDiv.innerHTML = `${ping<=80?"📶":"📡"} ${q}`; }
     setInterval(updateInternetStatus, 3000); updateInternetStatus();
     function updateClock() { let d = new Date(); clockSpan.innerText = d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + " - " + d.toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}); }
@@ -311,9 +440,9 @@
     function updateTaskbarButtons() { taskbarItemsDiv.innerHTML = ''; for (let [winId, info] of openWindows.entries()) { let btn = document.createElement('div'); btn.className = 'taskbar-app-btn'; btn.innerHTML = `${info.icon} ${info.title}`; btn.onclick = () => { info.windowElement.style.display = 'flex'; info.windowElement.style.zIndex = Date.now(); }; taskbarItemsDiv.appendChild(btn); } }
     function registerWindow(appId, win, title, icon) { let id = appId + '_' + Date.now(); openWindows.set(id, { windowElement: win, title, icon }); updateTaskbarButtons(); win.addEventListener('mousedown', () => win.style.zIndex = Date.now()); win.querySelector('.close-win').onclick = () => { win.remove(); openWindows.delete(id); updateTaskbarButtons(); }; win.querySelector('.minimize').onclick = () => win.style.display = 'none'; }
     function makeDraggable(h,w) { let ox,oy,drag=false; h.addEventListener('mousedown',(e)=>{ if(e.target.closest('.window-controls')) return; drag=true; ox=e.clientX-w.offsetLeft; oy=e.clientY-w.offsetTop; w.style.zIndex=Date.now(); document.addEventListener('mousemove',move); document.addEventListener('mouseup',up); e.preventDefault(); }); function move(e){ if(!drag) return; let l=e.clientX-ox, t=e.clientY-oy; l=Math.min(Math.max(l,0),window.innerWidth-w.offsetWidth); t=Math.min(Math.max(t,0),window.innerHeight-70); w.style.left=l+'px'; w.style.top=t+'px'; } function up(){ drag=false; document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); } }
-    function createWindow(title, html, appId) { let w = document.createElement('div'); w.className='app-window'; w.style.left='100px'; w.style.top='80px'; w.style.zIndex=Date.now(); if(!animations) w.style.transition='none'; w.style.borderRadius=borderRadius+'px'; w.innerHTML=`<div class="window-header" style="border-radius:${borderRadius}px ${borderRadius}px 0 0"><span>${title}</span><div class="window-controls"><span class="minimize">─</span><span class="close-win">✕</span></div></div><div class="window-content">${html}</div>`; makeDraggable(w.querySelector('.window-header'),w); let icon = {paint:'🎨',myPC:'💻',ie:'🌐',notepad:'📝',games:'🎮',store:'🛒',office:'📊',cmd:'>_',recycleBin:'🗑️'}[appId] || '📄'; registerWindow(appId, w, title, icon); return w; }
+    function createWindow(title, html, appId) { let w = document.createElement('div'); w.className='app-window'; w.style.left='100px'; w.style.top='80px'; w.style.zIndex=Date.now(); if(!animations) w.style.transition='none'; w.style.borderRadius=borderRadius+'px'; w.style.opacity = windowOpacity; w.innerHTML=`<div class="window-header" style="border-radius:${borderRadius}px ${borderRadius}px 0 0"><span>${title}</span><div class="window-controls"><span class="minimize">─</span><span class="close-win">✕</span></div></div><div class="window-content">${html}</div>`; makeDraggable(w.querySelector('.window-header'),w); let icon = {paint:'🎨',myPC:'💻',ie:'🌐',notepad:'📝',games:'🎮',store:'🛒',office:'📊',cmd:'>_',recycleBin:'🗑️'}[appId] || '📄'; registerWindow(appId, w, title, icon); return w; }
 
-    // --- DESKTOP ICONS & POSITIONING ---
+    // --- DESKTOP ICONS & POSITIONING (keep as before, but with auto-save) ---
     function getNextFreePosition() { let taken = []; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) { let p = appPositions[a.id]; if(p) taken.push(`${p.x},${p.y}`); } for(let f of customFolders) taken.push(`${f.x},${f.y}`); for(let f of desktopFiles) taken.push(`${f.x},${f.y}`); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) { let p = appPositions[`game_${g.id}`]; if(p) taken.push(`${p.x},${p.y}`); } for(let i=0;i<100;i++){ let x=20+(i%5)*iconSpacing, y=20+Math.floor(i/5)*iconSpacing; if(!taken.includes(`${x},${y}`)) return {x,y}; } return {x:20,y:20}; }
     function autoArrangeIcons() { let idx=0; let items = []; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) items.push({type:'app',id:a.id}); for(let f of customFolders) items.push({type:'folder',id:f.id}); for(let f of desktopFiles) items.push({type:'file',id:f.id}); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) items.push({type:'game',id:g.id}); for(let it of items) { let x=20+(idx%5)*iconSpacing, y=20+Math.floor(idx/5)*iconSpacing; if(it.type==='app') appPositions[it.id]={x,y}; else if(it.type==='folder') { let f=customFolders.find(f=>f.id==it.id); if(f) { f.x=x; f.y=y; } } else if(it.type==='file') { let f=desktopFiles.find(f=>f.id==it.id); if(f) { f.x=x; f.y=y; } } else if(it.type==='game') appPositions[`game_${it.id}`]={x,y}; idx++; } renderDesktopIcons(); }
     function renderDesktopIcons() { desktopIconsContainer.innerHTML = ''; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) { let p=appPositions[a.id]||getNextFreePosition(); appPositions[a.id]=p; desktopIconsContainer.appendChild(createIcon('app',a.id,a.icon,a.name,p.x,p.y)); } for(let f of customFolders) desktopIconsContainer.appendChild(createIcon('folder',f.id,'📁',f.name,f.x,f.y)); for(let f of desktopFiles) desktopIconsContainer.appendChild(createIcon('file',f.id,'📄',f.name,f.x,f.y)); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) { let p=appPositions[`game_${g.id}`]||getNextFreePosition(); appPositions[`game_${g.id}`]=p; desktopIconsContainer.appendChild(createIcon('game',g.id,g.icon,g.name,p.x,p.y)); } let rp=appPositions['recycleBin']||{x:20,y:400}; appPositions['recycleBin']=rp; let rec=createIcon('app','recycleBin','🗑️','Recycle Bin',rp.x,rp.y); rec.addEventListener('dragover',e=>e.preventDefault()); rec.addEventListener('drop',handleDropOnRecycleBin); desktopIconsContainer.appendChild(rec); applyDesktopSettings(); saveState(); }
@@ -321,7 +450,7 @@
     function startDrag(e) { let ic=e.target.closest('.desktop-icon'); if(!ic) return; e.preventDefault(); dragTarget=ic; let r=ic.getBoundingClientRect(); dragOffsetX=e.clientX-r.left; dragOffsetY=e.clientY-r.top; dragStartX=e.clientX; dragStartY=e.clientY; isDraggingForMove=false; ic.classList.add('dragging'); document.addEventListener('mousemove',onDragMove); document.addEventListener('mouseup',stopDrag); }
     function onDragMove(e) { if(!dragTarget) return; let dx=Math.abs(e.clientX-dragStartX), dy=Math.abs(e.clientY-dragStartY); if(!isDraggingForMove && (dx>5||dy>5)) isDraggingForMove=true; if(isDraggingForMove) { let l=e.clientX-dragOffsetX, t=e.clientY-dragOffsetY; l=Math.min(Math.max(l,0),window.innerWidth-dragTarget.offsetWidth); t=Math.min(Math.max(t,0),window.innerHeight-70); dragTarget.style.left=l+'px'; dragTarget.style.top=t+'px'; } }
     function stopDrag(e) { if(!dragTarget) return; dragTarget.classList.remove('dragging'); let type=dragTarget.getAttribute('data-type'), id=dragTarget.getAttribute('data-id'); let under=document.elementsFromPoint(e.clientX,e.clientY)[0]; let recycle=under.closest('.desktop-icon[data-id="recycleBin"]'); if(recycle && (type==='app'||type==='file'||type==='game')) { if(type==='app' && !deletedApps.includes(id)) { deletedApps.push(id); } else if(type==='file') { desktopFiles=desktopFiles.filter(f=>f.id!=id); } else if(type==='game') { uninstallGame(id); } renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); dragTarget=null; document.removeEventListener('mousemove',onDragMove); document.removeEventListener('mouseup',stopDrag); saveState(); return; } if(isDraggingForMove) { let l=parseFloat(dragTarget.style.left), t=parseFloat(dragTarget.style.top); if(type==='app') appPositions[id]={x:l,y:t}; else if(type==='folder') { let f=customFolders.find(f=>f.id==id); if(f) { f.x=l; f.y=t; } } else if(type==='file') { let f=desktopFiles.find(f=>f.id==id); if(f) { f.x=l; f.y=t; } } else if(type==='game') appPositions[`game_${id}`]={x:l,y:t}; saveState(); } dragTarget=null; document.removeEventListener('mousemove',onDragMove); document.removeEventListener('mouseup',stopDrag); }
-    function applyDesktopSettings() { document.querySelectorAll('.desktop-icon').forEach(ic=>{ ic.style.width=iconSize+'px'; ic.querySelector('span').style.fontSize=fontSize+'px'; }); if(!wallpaperUrl && !wallpaperDataURL) desktopDiv.style.backgroundColor=desktopBgColor; if(taskbarAutoHide) taskbar.classList.add('auto-hide'); else taskbar.classList.remove('auto-hide'); taskbar.style.height=taskbarHeight+'px'; document.querySelectorAll('.app-window').forEach(w=>{ w.style.borderRadius=borderRadius+'px'; let h=w.querySelector('.window-header'); if(h) h.style.borderRadius=`${borderRadius}px ${borderRadius}px 0 0`; }); applyAccentAndTaskbar(); saveState(); }
+    function applyDesktopSettings() { document.querySelectorAll('.desktop-icon').forEach(ic=>{ ic.style.width=iconSize+'px'; ic.querySelector('span').style.fontSize=fontSize+'px'; }); if(!wallpaperUrl && !wallpaperDataURL) desktopDiv.style.backgroundColor=desktopBgColor; if(taskbarAutoHide) taskbar.classList.add('auto-hide'); else taskbar.classList.remove('auto-hide'); taskbar.style.height=taskbarHeight+'px'; document.querySelectorAll('.app-window').forEach(w=>{ w.style.borderRadius=borderRadius+'px'; let h=w.querySelector('.window-header'); if(h) h.style.borderRadius=`${borderRadius}px ${borderRadius}px 0 0`; w.style.opacity = windowOpacity; }); applyAccentAndTaskbar(); saveState(); }
     function openFolder(id) { let f=customFolders.find(f=>f.id==id); if(!f) return; if(openWindows.has(`folder_${id}`)) { openWindows.get(`folder_${id}`).windowElement.style.display='flex'; return; } let html='<div>'; if(f.contents?.length) f.contents.forEach(aid=>{ let a=APP_LIST.find(a=>a.id==aid); if(a) html+=`<div>${a.icon} ${a.name} <button data-restore="${aid}">Restore</button></div>`; }); else html+='<p>Empty. Drag apps here.</p>'; html+='</div>'; let win=createWindow(`📁 ${f.name}`,html,`folder_${id}`); document.body.appendChild(win); win.querySelectorAll('[data-restore]').forEach(btn=>{ btn.onclick=()=>{ let aid=btn.getAttribute('data-restore'); f.contents=f.contents.filter(x=>x!=aid); if(!appPositions[aid]) appPositions[aid]=getNextFreePosition(); renderDesktopIcons(); openFolder(id); saveState(); }; }); }
     function openFile(id) { let f=desktopFiles.find(f=>f.id==id); if(!f) return; let win=createWindow(f.name,`<pre>${escapeHtml(f.content)}</pre><button id="delFile">Delete</button>`, `file_${id}`); document.body.appendChild(win); win.querySelector('#delFile').onclick=()=>{ desktopFiles=desktopFiles.filter(x=>x.id!=id); win.remove(); renderDesktopIcons(); saveState(); }; }
     function createNewFolder() { let id=Date.now()+Math.random(); let name="New Folder"; let c=1; while(customFolders.some(f=>f.name===name)) name=`New Folder (${c++})`; let p=getNextFreePosition(); customFolders.push({id,name,x:p.x,y:p.y,contents:[]}); renderDesktopIcons(); saveState(); }
@@ -330,7 +459,7 @@
     function restoreAllApps() { if(deletedApps.length===0) return; deletedApps.forEach(appId=>{ if(!appPositions[appId]) appPositions[appId]=getNextFreePosition(); }); deletedApps=[]; renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); saveState(); alert("All apps restored from Recycle Bin."); }
     function uninstallGame(gid) { downloadedGames=downloadedGames.filter(g=>g.id!=gid); deletedDownloadedGames.push(gid); renderDesktopIcons(); saveState(); }
 
-    // --- DOWNLOAD QUEUE & STORE GAMES ---
+    // --- DOWNLOAD QUEUE & STORE GAMES (unchanged) ---
     function showDownloadAnimation(callback) { let overlay=document.createElement('div'); overlay.className='download-overlay'; overlay.innerHTML=`<div class="download-box"><h3>Downloading...</h3><div class="download-progress"><div class="download-bar" id="dlBar"></div></div><p id="dlText">0%</p></div>`; document.body.appendChild(overlay); let bar=overlay.querySelector('#dlBar'), text=overlay.querySelector('#dlText'); let duration=5000+Math.random()*15000; let start=Date.now(); let interval=setInterval(()=>{ let elapsed=Date.now()-start; let percent=Math.min(100, (elapsed/duration)*100); bar.style.width=percent+'%'; text.innerText=Math.floor(percent)+'%'; if(percent>=100) { clearInterval(interval); setTimeout(()=>{ overlay.remove(); callback(); },200); } },50); }
     const storeGames = [
         { id:"minesweeper", name:"Minesweeper", icon:"💣", createWindow:()=>minesweeperUI() },
@@ -341,17 +470,44 @@
     ];
     function installGame(def) { if(downloadingNow) { alert("Please wait, another download is in progress."); return; } if(downloadedGames.some(g=>g.id===def.id)) { alert(`${def.name} is already installed!`); return; } downloadingNow=true; showDownloadAnimation(()=>{ let newGame={ id:def.id, name:def.name, icon:def.icon, launch:()=>{ let win=createWindow(def.name, def.createWindow(), `game_${def.id}`); document.body.appendChild(win); } }; downloadedGames.push(newGame); downloadingNow=false; renderDesktopIcons(); saveState(); alert(`${def.name} installed!`); }); }
 
-    // --- GAME UIs (shortened but fully functional) ---
+    // --- GAME UIs (shortened but fully functional - same as before) ---
     function minesweeperUI() { let containerId = 'msweeper_' + Date.now(); let html = `<div style="text-align:center"><h3>Minesweeper</h3><div id="${containerId}" style="display:inline-block"></div><br><button id="resetBtn">New Game</button></div>`; setTimeout(()=>{ let boardDiv = document.getElementById(containerId); if(!boardDiv) return; let rows=9, cols=9, mines=10; let grid, revealed, flags; function init() { grid=Array(rows).fill().map(()=>Array(cols).fill(0)); revealed=Array(rows).fill().map(()=>Array(cols).fill(false)); flags=Array(rows).fill().map(()=>Array(cols).fill(false)); let placed=0; while(placed<mines) { let r=Math.floor(Math.random()*rows), c=Math.floor(Math.random()*cols); if(grid[r][c]!==-1) { grid[r][c]=-1; placed++; } } for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(grid[r][c]!==-1) { let cnt=0; for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) { let nr=r+dr, nc=c+dc; if(nr>=0 && nr<rows && nc>=0 && nc<cols && grid[nr][nc]===-1) cnt++; } grid[r][c]=cnt; } render(); } function reveal(r,c) { if(r<0||r>=rows||c<0||c>=cols || revealed[r][c]) return; if(grid[r][c]===-1) { alert("BOOM! You lose."); init(); return; } revealed[r][c]=true; if(grid[r][c]===0) { for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) if(dr!==0 || dc!==0) reveal(r+dr,c+dc); } render(); checkWin(); } function checkWin() { let win=true; for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(grid[r][c]!==-1 && !revealed[r][c]) win=false; if(win) alert("You win!"); } function render() { boardDiv.style.display='grid'; boardDiv.style.gridTemplateColumns=`repeat(${cols},30px)`; boardDiv.innerHTML=''; for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) { let cell=document.createElement('div'); cell.className='ms-cell'; if(revealed[r][c]) { cell.classList.add('revealed'); let val=grid[r][c]; if(val===-1) { cell.innerHTML='💣'; cell.classList.add('mine'); } else if(val>0) cell.innerHTML=val; else cell.innerHTML=''; } else { cell.innerHTML=flags[r][c]?'🚩':''; cell.onclick=(function(r,c){return function(){ reveal(r,c); };}(r,c)); cell.oncontextmenu=(function(r,c){return function(e){ e.preventDefault(); flags[r][c]=!flags[r][c]; render(); };}(r,c)); } boardDiv.appendChild(cell); } } init(); document.getElementById('resetBtn').onclick=init; },50); return html; }
     function heartsUI() { return `<div><h3>Hearts</h3><div id="heartsGame"></div></div><script>setTimeout(()=>{ let c=document.getElementById('heartsGame'); if(!c) return; let players=[[],[],[],[]]; let suits=['♥','♦','♣','♠']; let values=['2','3','4','5','6','7','8','9','10','J','Q','K','A']; let deck=[]; for(let s of suits) for(let v of values) deck.push({suit:s,value:v}); for(let i=deck.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; } for(let i=0;i<52;i++) players[i%4].push(deck[i]); let trick=[], scores=[0,0,0,0], cur=0; function render(){ let html=\`<p>Scores: \${scores.join(' - ')}</p><div style="display:flex; gap:20px;">\`; for(let p=0;p<4;p++) html+=\`<div><b>Player \${p+1}</b><br>\${players[p].map(c=>\`\${c.value}\${c.suit}\`).join(', ')}</div>\`; html+=\`</div><div>Current trick: \${trick.map(c=>\`\${c.value}\${c.suit}\`).join(', ')}</div><button id="playCardBtn">Play Card (auto)</button>\`; c.innerHTML=html; document.getElementById('playCardBtn').onclick=()=>{ if(players[cur].length){ let card=players[cur].shift(); trick.push(card); cur=(cur+1)%4; render(); if(trick.length===4){ let win=0, lead=trick[0].suit, high=0; for(let i=0;i<4;i++) if(trick[i].suit===lead && values.indexOf(trick[i].value)>high){ high=values.indexOf(trick[i].value); win=i; } let pts=0; for(let c of trick) if(c.suit==='♥') pts++; if(trick.some(c=>c.suit==='♠'&&c.value==='Q')) pts+=13; scores[win]+=pts; trick=[]; cur=win; render(); if(players[0].length===0) alert(\`Game over! Winner: \${scores.indexOf(Math.min(...scores))+1}\`); } } }; } render(); },100);<\/script>`; }
     function solitaireUI() { return `<div><h3>Solitaire</h3><div id="solitaireGame"></div></div><script>setTimeout(()=>{ let c=document.getElementById('solitaireGame'); if(!c) return; let stock=[], waste=[], foundations=[[],[],[],[]], tableau=[[],[],[],[],[],[],[]]; let suits=['♥','♦','♣','♠']; let values=['A','2','3','4','5','6','7','8','9','10','J','Q','K']; let deck=[]; for(let s of suits) for(let v of values) deck.push({suit:s,value:v,rank:values.indexOf(v)}); for(let i=deck.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; } for(let i=0;i<7;i++) for(let j=i;j<7;j++) tableau[j].push(deck.pop()); stock=deck; function render(){ let html=\`<div><div>Stock (\${stock.length}) <button id="drawBtn">Draw</button></div><div>Waste: \${waste.length?\`\${waste[waste.length-1].value}\${waste[waste.length-1].suit}\`:'empty'}</div><div style="display:flex; gap:10px;">Foundations: \${foundations.map(f=>\`<div class="card">\${f.length?\`\${f[f.length-1].value}\${f[f.length-1].suit}\`:''}</div>\`).join('')}</div><div style="display:flex; gap:10px;">Tableau: \${tableau.map(pile=>\`<div style="width:60px;height:80px;border:1px solid #888;background:#e0dbc8;display:flex;flex-direction:column-reverse;">\${pile.map(c=>\`<div class="card" style="width:56px;height:76px;">\${c.value}\${c.suit}</div>\`).join('')}</div>\`).join('')}</div></div>\`; c.innerHTML=html; document.getElementById('drawBtn').onclick=()=>{ if(stock.length) waste.push(stock.pop()); else { stock=waste.reverse(); waste=[]; } render(); }; } render(); },100);<\/script>`; }
     function chessUI() { return `<div><h3>Chess Titans</h3><div id="chessBoard" style="display:grid;grid-template-columns:repeat(8,50px);"></div><button id="chessReset">Reset</button></div><script>setTimeout(()=>{ let bd=document.getElementById('chessBoard'); if(!bd) return; let board=[], selected=null, turn='white'; let pieces={'r':'♜','n':'♞','b':'♝','q':'♛','k':'♚','p':'♟','R':'♖','N':'♘','B':'♗','Q':'♕','K':'♔','P':'♙'}; function init(){ board=Array(8).fill().map(()=>Array(8).fill(null)); let layout=['r','n','b','q','k','b','n','r']; for(let i=0;i<8;i++){ board[0][i]={type:layout[i],color:'black'}; board[1][i]={type:'p',color:'black'}; board[6][i]={type:'p',color:'white'}; board[7][i]={type:layout[i],color:'white'}; } } function getPiece(p){ if(!p) return ''; let key=p.type+(p.color==='white'?p.type.toUpperCase():p.type.toLowerCase()); return pieces[key]||''; } function render(){ bd.innerHTML=''; for(let r=0;r<8;r++) for(let c=0;c<8;c++){ let sq=document.createElement('div'); sq.className=\`chess-square \${(r+c)%2===0?'light':'dark'}\`; if(selected && selected.r===r && selected.c===c) sq.classList.add('selected'); sq.style.fontSize='32px'; sq.style.display='flex'; sq.style.alignItems='center'; sq.style.justifyContent='center'; sq.innerHTML=getPiece(board[r][c]); sq.onclick=(function(r,c){return function(){ if(selected){ if(isValid(selected.r,selected.c,r,c)){ board[r][c]=board[selected.r][selected.c]; board[selected.r][selected.c]=null; selected=null; turn=turn==='white'?'black':'white'; render(); if(turn==='black') setTimeout(aiMove,100); } else selected=null; render(); } else if(board[r][c] && board[r][c].color===turn) selected={r,c}; }; })(r,c); bd.appendChild(sq); } } function isValid(sr,sc,tr,tc){ let p=board[sr][sc]; if(!p) return false; let dx=tr-sr, dy=tc-sc; if(p.type==='p'){ let dir=p.color==='white'?-1:1; if(dx===dir && dy===0 && !board[tr][tc]) return true; if(dx===dir && Math.abs(dy)===1 && board[tr][tc] && board[tr][tc].color!==p.color) return true; return false; } if(p.type==='r') return (sr===tr||sc===tc) && clearPath(sr,sc,tr,tc); if(p.type==='b') return Math.abs(dx)===Math.abs(dy) && clearPath(sr,sc,tr,tc); if(p.type==='q') return (sr===tr||sc===tc||Math.abs(dx)===Math.abs(dy)) && clearPath(sr,sc,tr,tc); if(p.type==='k') return Math.abs(dx)<=1 && Math.abs(dy)<=1; if(p.type==='n') return (Math.abs(dx)===2 && Math.abs(dy)===1) || (Math.abs(dx)===1 && Math.abs(dy)===2); return false; } function clearPath(sr,sc,tr,tc){ let sx=Math.sign(tr-sr), sy=Math.sign(tc-sc); let r=sr+sx, c=sc+sy; while(r!==tr || c!==tc){ if(board[r][c]) return false; r+=sx; c+=sy; } return true; } function aiMove(){ let moves=[]; for(let i=0;i<8;i++) for(let j=0;j<8;j++) if(board[i][j] && board[i][j].color==='black') for(let ti=0;ti<8;ti++) for(let tj=0;tj<8;tj++) if(isValid(i,j,ti,tj)) moves.push({sr:i,sc:j,tr:ti,tc:tj}); if(moves.length){ let m=moves[Math.floor(Math.random()*moves.length)]; board[m.tr][m.tc]=board[m.sr][m.sc]; board[m.sr][m.sc]=null; turn='white'; render(); } } init(); render(); document.getElementById('chessReset').onclick=()=>{ init(); selected=null; turn='white'; render(); }; },100);<\/script>`; }
     function freecellUI() { return `<div><h3>FreeCell</h3><div id="freecellGame"></div></div><script>setTimeout(()=>{ let c=document.getElementById('freecellGame'); if(!c) return; let free=[[],[],[],[]], found=[[],[],[],[]], tab=[[],[],[],[],[],[],[],[]]; let suits=['♥','♦','♣','♠']; let values=['A','2','3','4','5','6','7','8','9','10','J','Q','K']; let deck=[]; for(let s of suits) for(let v of values) deck.push({suit:s,value:v,rank:values.indexOf(v)}); for(let i=deck.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; } for(let i=0;i<8;i++) for(let j=i;j<52;j+=8) tab[i].push(deck.pop()); function render(){ let html=\`<div style="display:flex; gap:20px;"><div><b>Free cells</b><div style="display:flex;">\${free.map(f=>\`<div class="freecell-pile">\${f.length?\`\${f[0].value}\${f[0].suit}\`:''}</div>\`).join('')}</div></div><div><b>Foundations</b><div style="display:flex;">\${found.map(f=>\`<div class="freecell-pile">\${f.length?\`\${f[f.length-1].value}\${f[f.length-1].suit}\`:''}</div>\`).join('')}</div></div></div><div><b>Tableau</b><div style="display:flex; gap:5px;">\${tab.map((pile,idx)=>\`<div><div class="freecell-pile" data-pile="\${idx}">\${pile.length?\`\${pile[pile.length-1].value}\${pile[pile.length-1].suit}\`:''}</div><small>\${idx+1}</small></div>\`).join('')}</div></div><p>Simple demo - drag not implemented.</p>\`; c.innerHTML=html; } render(); },100);<\/script>`; }
 
-    // --- MICROSOFT OFFICE (Projects) ---
-    function officeUI() { let html = `<div><h3>Microsoft Office</h3><div id="officeView"><div class="office-toolbar"><button id="newProjectBtn">➕ New Project</button></div><div id="projectList" class="office-project-list"></div></div></div>`; setTimeout(()=>{ let container = document.getElementById('officeView'); if(!container) return; function renderProjectList() { let listDiv = document.getElementById('projectList'); if(!listDiv) return; if(officeProjects.length===0) { listDiv.innerHTML='<p>No projects. Click "New Project" to create one.</p>'; return; } listDiv.innerHTML = officeProjects.map(p => `<div class="office-project-item" data-id="${p.id}"><span>📄 ${escapeHtml(p.name)}</span><div><button class="editProject">Edit</button> <button class="deleteProject">Delete</button></div></div>`).join(''); listDiv.querySelectorAll('.editProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); openProjectEditor(id); }; }); listDiv.querySelectorAll('.deleteProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); officeProjects=officeProjects.filter(p=>p.id!=id); renderProjectList(); saveState(); }; }); } function openProjectEditor(id) { let project = officeProjects.find(p=>p.id==id); if(!project) return; let win=createWindow(`Office - ${project.name}`, `<div class="office-editor"><input type="text" id="projName" value="${escapeHtml(project.name)}" style="width:100%; margin-bottom:10px;"><h4>Text</h4><textarea id="projText">${escapeHtml(project.textContent||'')}</textarea><h4>Drawing</h4><canvas id="officeCanvas" width="400" height="200" class="office-drawing" style="background:white;"></canvas><div><button id="clearCanvas">Clear Drawing</button></div><h4>Images</h4><input type="file" id="imageUpload" accept="image/*"><div id="imageList"></div><button id="saveProject">Save Project</button></div>`, `office_edit_${id}`); document.body.appendChild(win); let canvas=win.querySelector('#officeCanvas'), ctx=canvas.getContext('2d'); let drawing=false; if(project.drawingDataURL) { let img=new Image(); img.onload=()=>ctx.drawImage(img,0,0,canvas.width,canvas.height); img.src=project.drawingDataURL; } canvas.addEventListener('mousedown',()=>drawing=true); canvas.addEventListener('mouseup',()=>drawing=false); canvas.addEventListener('mousemove',(e)=>{ if(!drawing) return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let x=(e.clientX-rect.left)*sx, y=(e.clientY-rect.top)*sy; ctx.fillStyle='black'; ctx.fillRect(x-2,y-2,4,4); }); win.querySelector('#clearCanvas').onclick=()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); }; let imageList=win.querySelector('#imageList'); function refreshImages() { imageList.innerHTML=project.images?.map((img,idx)=>`<div><img src="${img}" style="max-width:100px; max-height:100px;"> <button data-idx="${idx}">Remove</button></div>`).join('')||''; imageList.querySelectorAll('button').forEach(btn=>{ btn.onclick=()=>{ let idx=parseInt(btn.getAttribute('data-idx')); project.images.splice(idx,1); refreshImages(); saveState(); }; }); } refreshImages(); win.querySelector('#imageUpload').onchange=(e)=>{ let file=e.target.files[0]; if(file){ let reader=new FileReader(); reader.onload=(ev)=>{ if(!project.images) project.images=[]; project.images.push(ev.target.result); refreshImages(); saveState(); }; reader.readAsDataURL(file); } }; win.querySelector('#saveProject').onclick=()=>{ project.name=win.querySelector('#projName').value; project.textContent=win.querySelector('#projText').value; project.drawingDataURL=canvas.toDataURL(); renderProjectList(); win.close(); saveState(); }; } function createNewProject() { let name=prompt("Project name:","My Project"); if(!name) return; let newId=Date.now()+Math.random(); officeProjects.push({ id:newId, name:name, textContent:"", drawingDataURL:null, images:[] }); renderProjectList(); saveState(); } document.getElementById('newProjectBtn').onclick=createNewProject; renderProjectList(); },50); return html; }
+    // --- MICROSOFT OFFICE (projects) with account lock ---
+    function officeUI() {
+        if (!loggedIn) {
+            return `<div class="account-locked"><h3>🔒 Microsoft Office</h3><p>You need a Microsoft Account to use Office.</p><p>Please go to Start → Microsoft Account and create one.</p></div>`;
+        }
+        let html = `<div><h3>Microsoft Office</h3><div id="officeView"><div class="office-toolbar"><button id="newProjectBtn">➕ New Project</button></div><div id="projectList" class="office-project-list"></div></div></div>`;
+        setTimeout(()=>{ let container = document.getElementById('officeView'); if(!container) return; function renderProjectList() { let listDiv = document.getElementById('projectList'); if(!listDiv) return; if(officeProjects.length===0) { listDiv.innerHTML='<p>No projects. Click "New Project" to create one.</p>'; return; } listDiv.innerHTML = officeProjects.map(p => `<div class="office-project-item" data-id="${p.id}"><span>📄 ${escapeHtml(p.name)}</span><div><button class="editProject">Edit</button> <button class="deleteProject">Delete</button></div></div>`).join(''); listDiv.querySelectorAll('.editProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); openProjectEditor(id); }; }); listDiv.querySelectorAll('.deleteProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); officeProjects=officeProjects.filter(p=>p.id!=id); renderProjectList(); saveState(); }; }); } function openProjectEditor(id) { let project = officeProjects.find(p=>p.id==id); if(!project) return; let win=createWindow(`Office - ${project.name}`, `<div class="office-editor"><input type="text" id="projName" value="${escapeHtml(project.name)}" style="width:100%; margin-bottom:10px;"><h4>Text</h4><textarea id="projText">${escapeHtml(project.textContent||'')}</textarea><h4>Drawing</h4><canvas id="officeCanvas" width="400" height="200" class="office-drawing" style="background:white;"></canvas><div><button id="clearCanvas">Clear Drawing</button></div><h4>Images</h4><input type="file" id="imageUpload" accept="image/*"><div id="imageList"></div><button id="saveProject">Save Project</button></div>`, `office_edit_${id}`); document.body.appendChild(win); let canvas=win.querySelector('#officeCanvas'), ctx=canvas.getContext('2d'); let drawing=false; if(project.drawingDataURL) { let img=new Image(); img.onload=()=>ctx.drawImage(img,0,0,canvas.width,canvas.height); img.src=project.drawingDataURL; } canvas.addEventListener('mousedown',()=>drawing=true); canvas.addEventListener('mouseup',()=>drawing=false); canvas.addEventListener('mousemove',(e)=>{ if(!drawing) return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let x=(e.clientX-rect.left)*sx, y=(e.clientY-rect.top)*sy; ctx.fillStyle='black'; ctx.fillRect(x-2,y-2,4,4); }); win.querySelector('#clearCanvas').onclick=()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); }; let imageList=win.querySelector('#imageList'); function refreshImages() { imageList.innerHTML=project.images?.map((img,idx)=>`<div><img src="${img}" style="max-width:100px; max-height:100px;"> <button data-idx="${idx}">Remove</button></div>`).join('')||''; imageList.querySelectorAll('button').forEach(btn=>{ btn.onclick=()=>{ let idx=parseInt(btn.getAttribute('data-idx')); project.images.splice(idx,1); refreshImages(); saveState(); }; }); } refreshImages(); win.querySelector('#imageUpload').onchange=(e)=>{ let file=e.target.files[0]; if(file){ let reader=new FileReader(); reader.onload=(ev)=>{ if(!project.images) project.images=[]; project.images.push(ev.target.result); refreshImages(); saveState(); }; reader.readAsDataURL(file); } }; win.querySelector('#saveProject').onclick=()=>{ project.name=win.querySelector('#projName').value; project.textContent=win.querySelector('#projText').value; project.drawingDataURL=canvas.toDataURL(); renderProjectList(); win.close(); saveState(); }; } function createNewProject() { let name=prompt("Project name:","My Project"); if(!name) return; let newId=Date.now()+Math.random(); officeProjects.push({ id:newId, name:name, textContent:"", drawingDataURL:null, images:[] }); renderProjectList(); saveState(); } document.getElementById('newProjectBtn').onclick=createNewProject; renderProjectList(); },50); return html;
+    }
 
-    // --- ENHANCED MY PC: all files/folders clickable with random content ---
+    // --- STORE UI with account lock ---
+    function storeUI() {
+        if (!loggedIn) {
+            return `<div class="account-locked"><h3>🛒 Microsoft Store</h3><p>You need a Microsoft Account to access the Store.</p><p>Please go to Start → Microsoft Account and create one.</p></div>`;
+        }
+        let html='<h3>Microsoft Store</h3><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">'; storeGames.forEach(g=>{ html+=`<div class="store-item" data-game="${g.id}" style="background:#d4cfb8;padding:10px;border-radius:8px;text-align:center;cursor:pointer;">${g.icon} ${g.name}<br><small>Click to install</small></div>`; }); html+='</div>'; return html;
+    }
+    function initStore(win){ win.querySelectorAll('.store-item').forEach(el=>{ el.onclick=()=>{ let id=el.getAttribute('data-game'); let def=storeGames.find(g=>g.id===id); if(def) installGame(def); }; }); }
+
+    // --- OTHER APPS (Paint, Notepad, IE, CMD, My PC, Pictures, Calendar, Calculator) ---
+    function paintUI() { return `<div class="paint-toolbar"><select id="ptool"><option>Brush</option><option>Eraser</option><option>Rect</option><option>Circle</option><option>Line</option><option>Fill</option></select><input type="color" id="pcolor"><input type="range" id="psize" min="1" max="20" value="4"><button id="pclear">Clear</button></div><canvas id="paintCanvas" width="450" height="350" style="border:1px solid #aaa; background:white;"></canvas>`; }
+    function initPaint(win) { let canvas=win.querySelector('#paintCanvas'), ctx=canvas.getContext('2d'); canvas.width=canvas.clientWidth; canvas.height=canvas.clientHeight; ctx.fillStyle='white'; ctx.fillRect(0,0,canvas.width,canvas.height); let painting=false, tool='brush', color='#000', size=4, startX,startY; let t=win.querySelector('#ptool'), c=win.querySelector('#pcolor'), s=win.querySelector('#psize'), clr=win.querySelector('#pclear'); c.oninput=e=>color=e.target.value; s.oninput=e=>size=parseInt(e.target.value); t.onchange=e=>tool=e.target.value.toLowerCase(); clr.onclick=()=>{ ctx.fillStyle='white'; ctx.fillRect(0,0,canvas.width,canvas.height); }; function drawDot(x,y){ ctx.fillStyle=tool==='eraser'?'white':color; ctx.beginPath(); ctx.arc(x,y,size/2,0,Math.PI*2); ctx.fill(); } function drawRect(x1,y1,x2,y2){ ctx.fillStyle=color; ctx.fillRect(Math.min(x1,x2),Math.min(y1,y2),Math.abs(x2-x1),Math.abs(y2-y1)); } function drawCircle(x1,y1,x2,y2){ let r=Math.hypot(x2-x1,y2-y1); ctx.beginPath(); ctx.arc(x1,y1,r,0,Math.PI*2); ctx.fillStyle=color; ctx.fill(); } function drawLine(x1,y1,x2,y2){ ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.strokeStyle=color; ctx.lineWidth=size; ctx.stroke(); } function floodFill(x,y){ let img=ctx.getImageData(0,0,canvas.width,canvas.height), data=img.data, target=ctx.getImageData(x,y,1,1).data, fill=[parseInt(color.slice(1,3),16),parseInt(color.slice(3,5),16),parseInt(color.slice(5,7),16),255]; let stack=[{x,y}]; while(stack.length){ let {x:cx,y:cy}=stack.pop(); if(cx<0||cy<0||cx>=canvas.width||cy>=canvas.height) continue; let idx=(cy*canvas.width+cx)*4; if(data[idx]===target[0]&&data[idx+1]===target[1]&&data[idx+2]===target[2]&&data[idx+3]===target[3]){ data[idx]=fill[0]; data[idx+1]=fill[1]; data[idx+2]=fill[2]; data[idx+3]=fill[3]; stack.push({x:cx+1,y:cy},{x:cx-1,y:cy},{x:cx,y:cy+1},{x:cx,y:cy-1}); } } ctx.putImageData(img,0,0); } canvas.addEventListener('mousedown',(e)=>{ let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy; if(tool==='fill'){ floodFill(mx,my); return; } painting=true; startX=mx; startY=my; if(tool==='brush'||tool==='eraser') drawDot(mx,my); }); canvas.addEventListener('mousemove',(e)=>{ if(!painting) return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy; if(tool==='brush') drawDot(mx,my); else if(tool==='eraser') drawDot(mx,my); }); canvas.addEventListener('mouseup',(e)=>{ if(!painting) return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy; if(tool==='rect') drawRect(startX,startY,mx,my); else if(tool==='circle') drawCircle(startX,startY,mx,my); else if(tool==='line') drawLine(startX,startY,mx,my); painting=false; }); }
+    function notepadUI(){ return `<textarea id="nt" style="width:100%; height:300px;"></textarea><button id="saveNote">Save to Desktop</button>`; }
+    function initNotepad(win){ win.querySelector('#saveNote').onclick=()=>{ let name=prompt("File name:","Note")+".txt"; if(name){ let pos=getNextFreePosition(); desktopFiles.push({id:Date.now()+Math.random(),name,content:win.querySelector('#nt').value,x:pos.x,y:pos.y}); renderDesktopIcons(); saveState(); alert("Saved!"); } }; }
+    function ieUI(){ return `<div><input id="ieSearch" placeholder="Type URL or search term..."><button id="ieGo">Go</button></div><div id="ieRes" style="height:300px; overflow:auto; margin-top:10px; background:#fff; padding:10px;">🌐 Welcome to Internet Explorer<br>Type a website (e.g., https://example.com) or a search term.<br>Special keywords: sprunki, retrocore, youtube, google, 666</div>`; }
+    function initIE(win){ let inp=win.querySelector('#ieSearch'), btn=win.querySelector('#ieGo'), res=win.querySelector('#ieRes'); btn.onclick=()=>{ let q=inp.value.trim(); if(!q) return; let lower=q.toLowerCase(); if(lower==='sprunki') window.open('https://sprunki.com/','_blank'); else if(lower==='retrocore') window.open('https://krisxxxllkrisipurvanov-cpu.github.io/RetroCore/','_blank'); else if(lower==='youtube') window.open('https://youtube.com/','_blank'); else if(lower==='google') window.open('https://google.com/','_blank'); else if(lower==='666') res.innerHTML='<span style="color:red;">⚠️ Don\'t look out your window at 3am...</span>'; else if(q.startsWith('http://')||q.startsWith('https://')) window.open(q,'_blank'); else if(q.includes('.')) window.open('https://'+q,'_blank'); else window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank'); }; }
+    function cmdUI() { return `<div class="cmd-output" id="cmdOut">Windows Server 2026 CMD<br>Type 'help' for commands.<br></div><div class="cmd-input-line"><span class="cmd-prompt">C:\\></span><input id="cmdInp" class="cmd-input"></div>`; }
+    function initCMD(win) { let out=win.querySelector('#cmdOut'), inp=win.querySelector('#cmdInp'); function add(t,e=false){ let d=document.createElement('div'); d.style.color=e?'#f66':'#0f0'; d.innerHTML=t; out.appendChild(d); out.scrollTop=out.scrollHeight; } function proc(c){ c=c.trim().toLowerCase(); if(c==='help') add("Commands: open [app], delete [app], restart pc, shutdown pc, 666\nApps: paint, mypc, ie, notepad, games, store, office, cmd"); else if(c.startsWith('open ')){ let an=c.substring(5); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an] && !deletedApps.includes(map[an])){ launchApp(map[an]); add(`Opening ${an}...`); } else add(`Error: ${an} not found or deleted.`,true); } else if(c.startsWith('delete ')){ let an=c.substring(7); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an] && !deletedApps.includes(map[an])){ deletedApps.push(map[an]); renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); add(`${an} deleted.`); } else add(`Cannot delete ${an}.`,true); } else if(c==='restart pc'){ add("Restarting..."); setTimeout(()=>restart(),500); } else if(c==='shutdown pc'){ add("Shutting down..."); setTimeout(()=>shutdown(),500); } else if(c==='666'){ add("⚠️ FORBIDDEN! CHAOS ENGAGED ⚠️",true); setTimeout(()=>trigger666Chaos(),100); } else add(`'${c}' not recognized.`,true); } inp.addEventListener('keypress',e=>{ if(e.key==='Enter'){ let cmd=inp.value; if(cmd.trim()){ add(`C:\\> ${cmd}`); proc(cmd); } inp.value=''; } }); }
+    function gamesUI(){ return `<div><select id="gameSelect"><option value="snake">Snake</option><option value="tictactoe">Tic-Tac-Toe (Smart AI)</option><option value="pong">Pong</option></select><button id="resetGame">New</button></div><canvas id="gameCanvas" width="450" height="350" style="background:#1a2a1f;"></canvas><div id="gameStatus">Score:0</div>`; }
+    function initGames(win){ let canvas=win.querySelector('#gameCanvas'), ctx=canvas.getContext('2d'), sel=win.querySelector('#gameSelect'), reset=win.querySelector('#resetGame'), status=win.querySelector('#gameStatus'); let cur='snake', gameInt=null, pongInt=null; function stop(){ if(gameInt)clearInterval(gameInt); if(pongInt)clearInterval(pongInt); } function snake(){ stop(); let snake=[{x:10,y:10}], dir='RIGHT', food={x:15,y:10}, score=0; function draw(){ ctx.fillStyle='#1a2a1f'; ctx.fillRect(0,0,canvas.width,canvas.height); for(let i=0;i<snake.length;i++){ ctx.fillStyle=i===0?'#7ed957':'#3b8c2a'; ctx.fillRect(snake[i].x*20,snake[i].y*20,18,18); } ctx.fillStyle='#ff5252'; ctx.fillRect(food.x*20,food.y*20,18,18); status.innerText=`Score:${score}`; } function update(){ let head={...snake[0]}; if(dir==='RIGHT')head.x++; if(dir==='LEFT')head.x--; if(dir==='UP')head.y--; if(dir==='DOWN')head.y++; if(head.x<0||head.y<0||head.x>=20||head.y>=20||snake.some(s=>s.x===head.x&&s.y===head.y)){ clearInterval(gameInt); gameInt=null; status.innerText='Game Over'; return; } snake.unshift(head); if(head.x===food.x&&head.y===food.y){ score++; food={x:Math.floor(Math.random()*20),y:Math.floor(Math.random()*20)}; status.innerText=`Score:${score}`; }else snake.pop(); draw(); } function key(e){ if(e.key==='ArrowUp'&&dir!=='DOWN')dir='UP'; else if(e.key==='ArrowDown'&&dir!=='UP')dir='DOWN'; else if(e.key==='ArrowLeft'&&dir!=='RIGHT')dir='LEFT'; else if(e.key==='ArrowRight'&&dir!=='LEFT')dir='RIGHT'; } window.removeEventListener('keydown',window._snk); window._snk=key; window.addEventListener('keydown',window._snk); draw(); gameInt=setInterval(update,130); } function ttt(){ stop(); let board=Array(9).fill(null), turn='X', over=false; function drawBoard(){ ctx.fillStyle='#2c3e2b'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.strokeStyle='white'; for(let i=1;i<3;i++){ ctx.beginPath(); ctx.moveTo(i*150,0); ctx.lineTo(i*150,canvas.height); ctx.stroke(); ctx.moveTo(0,i*116); ctx.lineTo(canvas.width,i*116); ctx.stroke(); } for(let i=0;i<9;i++) if(board[i]){ let x=(i%3)*150+40, y=Math.floor(i/3)*116+50; ctx.font='48px Arial'; ctx.fillStyle=board[i]==='X'?'#ffaa66':'#66ccff'; ctx.fillText(board[i],x,y+10); } status.innerText=`Turn: ${turn}`; } function checkWinner(){ let l=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; for(let ll of l) if(board[ll[0]] && board[ll[0]]===board[ll[1]] && board[ll[1]]===board[ll[2]]) return board[ll[0]]; if(board.every(v=>v)) return 'tie'; return null; } function aiMove(){ let best=null; for(let i=0;i<9;i++) if(!board[i]){ let test=[...board]; test[i]='O'; if(checkWinner()==='O'){ best=i; break; } } if(best===null) for(let i=0;i<9;i++) if(!board[i]){ let test=[...board]; test[i]='X'; if(checkWinner()==='X'){ best=i; break; } } if(best===null && !board[4]) best=4; if(best===null){ let corners=[0,2,6,8]; for(let c of corners) if(!board[c]){ best=c; break; } } if(best===null) for(let i=0;i<9;i++) if(!board[i]){ best=i; break; } if(best!==null){ board[best]='O'; let w=checkWinner(); if(w){ over=true; status.innerText=w==='tie'?'Tie!':`O wins!`; drawBoard(); return; } turn='X'; drawBoard(); } } function handleClick(e){ if(over || turn!=='X') return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy; let col=Math.floor(mx/150), row=Math.floor(my/116); if(col>=0 && col<3 && row>=0 && row<3){ let idx=row*3+col; if(!board[idx]){ board[idx]='X'; let w=checkWinner(); if(w){ over=true; status.innerText=w==='tie'?'Tie!':`X wins!`; drawBoard(); return; } turn='O'; drawBoard(); if(!over) aiMove(); } } } canvas.removeEventListener('click',window._ttt); window._ttt=handleClick; canvas.addEventListener('click',window._ttt); drawBoard(); } function pong(){ stop(); let ballX=canvas.width/2,ballY=canvas.height/2,ballDX=2,ballDY=2,paddleY=canvas.height/2-40,aiY=canvas.height/2-40,ps=0,as=0; function draw(){ ctx.fillStyle='#1a2a1f'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='white'; ctx.fillRect(10,paddleY,10,80); ctx.fillRect(canvas.width-20,aiY,10,80); ctx.beginPath(); ctx.arc(ballX,ballY,6,0,Math.PI*2); ctx.fill(); status.innerText=`Player:${ps} AI:${as}`; } function update(){ ballX+=ballDX; ballY+=ballDY; if(ballY<0||ballY>canvas.height)ballDY=-ballDY; if(ballX<20&&ballX>10&&ballY>paddleY&&ballY<paddleY+80)ballDX=-ballDX; if(ballX>canvas.width-25&&ballX<canvas.width-10&&ballY>aiY&&ballY<aiY+80)ballDX=-ballDX; if(ballX<0){ as++; reset(); } if(ballX>canvas.width){ ps++; reset(); } let aiCenter=aiY+40; if(aiCenter<ballY-20)aiY+=3; else if(aiCenter>ballY+20)aiY-=3; aiY=Math.min(Math.max(aiY,0),canvas.height-80); draw(); } function reset(){ ballX=canvas.width/2; ballY=canvas.height/2; ballDX=(Math.random()>0.5?2:-2); ballDY=(Math.random()>0.5?2:-2); } function movePaddle(e){ let rect=canvas.getBoundingClientRect(); let my=(e.clientY-rect.top)*(canvas.height/rect.height); paddleY=Math.min(Math.max(my-40,0),canvas.height-80); } canvas.removeEventListener('mousemove',window._pong); window._pong=movePaddle; canvas.addEventListener('mousemove',window._pong); pongInt=setInterval(update,1000/60); draw(); } function switchGame(){ cur=sel.value; stop(); if(cur==='snake') snake(); else if(cur==='tictactoe') ttt(); else pong(); } sel.addEventListener('change',switchGame); reset.addEventListener('click',switchGame); switchGame(); }
+
+    // --- MY PC with clickable files ---
     function getRandomFileContent(name) {
         const contents = {
             "System32": "Windows NT Kernel Version 2026\nBuild 26001.x86_64\nCopyright (c) Microsoft Corporation. All rights reserved.\n\nSystem32 directory contains core system files.\nCritical error if deleted.",
@@ -397,14 +553,14 @@
         });
     }
 
-    // --- CALENDAR (simple month view) ---
+    // --- CALENDAR & CALCULATOR (unchanged) ---
     function openCalendar() {
         const now = new Date();
         const year = now.getFullYear();
         const month = now.getMonth();
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        let html = `<div style="text-align:center"><h3>📅 ${now.toLocaleString('default', { month: 'long' })} ${year}</h3><table class="calendar"><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr><tr>`;
+        let html = `<div style="text-align:center"><h3>📅 ${now.toLocaleString('default', { month: 'long' })} ${year}</h3><table class="calendar"><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>对待<tr>`;
         let day = 1;
         for (let i = 0; i < 6; i++) {
             for (let j = 0; j < 7; j++) {
@@ -419,14 +575,12 @@
                 }
             }
             if (day > daysInMonth) break;
-            html += `</tr><tr>`;
+            html += `键</tr>`;
         }
-        html += `</tr></table></div>`;
+        html += `能</table></div>`;
         const win = createWindow('Calendar', html, 'calendar');
         document.body.appendChild(win);
     }
-
-    // --- CALCULATOR (basic arithmetic) ---
     function openCalculator() {
         const calcId = 'calc_' + Date.now();
         const html = `<div><h3>🧮 Calculator</h3><div class="calculator"><div class="display" id="${calcId}_display">0</div>
@@ -485,22 +639,6 @@
             };
         });
     }
-
-    // --- OTHER APPS (Paint, Notepad, IE, CMD, Store) ---
-    function paintUI() { return `<div class="paint-toolbar"><select id="ptool"><option>Brush</option><option>Eraser</option><option>Rect</option><option>Circle</option><option>Line</option><option>Fill</option></select><input type="color" id="pcolor"><input type="range" id="psize" min="1" max="20" value="4"><button id="pclear">Clear</button></div><canvas id="paintCanvas" width="450" height="350" style="border:1px solid #aaa; background:white;"></canvas>`; }
-    function initPaint(win) { let canvas=win.querySelector('#paintCanvas'), ctx=canvas.getContext('2d'); canvas.width=canvas.clientWidth; canvas.height=canvas.clientHeight; ctx.fillStyle='white'; ctx.fillRect(0,0,canvas.width,canvas.height); let painting=false, tool='brush', color='#000', size=4, startX,startY; let t=win.querySelector('#ptool'), c=win.querySelector('#pcolor'), s=win.querySelector('#psize'), clr=win.querySelector('#pclear'); c.oninput=e=>color=e.target.value; s.oninput=e=>size=parseInt(e.target.value); t.onchange=e=>tool=e.target.value.toLowerCase(); clr.onclick=()=>{ ctx.fillStyle='white'; ctx.fillRect(0,0,canvas.width,canvas.height); }; function drawDot(x,y){ ctx.fillStyle=tool==='eraser'?'white':color; ctx.beginPath(); ctx.arc(x,y,size/2,0,Math.PI*2); ctx.fill(); } function drawRect(x1,y1,x2,y2){ ctx.fillStyle=color; ctx.fillRect(Math.min(x1,x2),Math.min(y1,y2),Math.abs(x2-x1),Math.abs(y2-y1)); } function drawCircle(x1,y1,x2,y2){ let r=Math.hypot(x2-x1,y2-y1); ctx.beginPath(); ctx.arc(x1,y1,r,0,Math.PI*2); ctx.fillStyle=color; ctx.fill(); } function drawLine(x1,y1,x2,y2){ ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.strokeStyle=color; ctx.lineWidth=size; ctx.stroke(); } function floodFill(x,y){ let img=ctx.getImageData(0,0,canvas.width,canvas.height), data=img.data, target=ctx.getImageData(x,y,1,1).data, fill=[parseInt(color.slice(1,3),16),parseInt(color.slice(3,5),16),parseInt(color.slice(5,7),16),255]; let stack=[{x,y}]; while(stack.length){ let {x:cx,y:cy}=stack.pop(); if(cx<0||cy<0||cx>=canvas.width||cy>=canvas.height) continue; let idx=(cy*canvas.width+cx)*4; if(data[idx]===target[0]&&data[idx+1]===target[1]&&data[idx+2]===target[2]&&data[idx+3]===target[3]){ data[idx]=fill[0]; data[idx+1]=fill[1]; data[idx+2]=fill[2]; data[idx+3]=fill[3]; stack.push({x:cx+1,y:cy},{x:cx-1,y:cy},{x:cx,y:cy+1},{x:cx,y:cy-1}); } } ctx.putImageData(img,0,0); } canvas.addEventListener('mousedown',(e)=>{ let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy; if(tool==='fill'){ floodFill(mx,my); return; } painting=true; startX=mx; startY=my; if(tool==='brush'||tool==='eraser') drawDot(mx,my); }); canvas.addEventListener('mousemove',(e)=>{ if(!painting) return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy; if(tool==='brush') drawDot(mx,my); else if(tool==='eraser') drawDot(mx,my); }); canvas.addEventListener('mouseup',(e)=>{ if(!painting) return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy; if(tool==='rect') drawRect(startX,startY,mx,my); else if(tool==='circle') drawCircle(startX,startY,mx,my); else if(tool==='line') drawLine(startX,startY,mx,my); painting=false; }); }
-    function notepadUI(){ return `<textarea id="nt" style="width:100%; height:300px;"></textarea><button id="saveNote">Save to Desktop</button>`; }
-    function initNotepad(win){ win.querySelector('#saveNote').onclick=()=>{ let name=prompt("File name:","Note")+".txt"; if(name){ let pos=getNextFreePosition(); desktopFiles.push({id:Date.now()+Math.random(),name,content:win.querySelector('#nt').value,x:pos.x,y:pos.y}); renderDesktopIcons(); saveState(); alert("Saved!"); } }; }
-    function ieUI(){ return `<div><input id="ieSearch" placeholder="Type URL or search term..."><button id="ieGo">Go</button></div><div id="ieRes" style="height:300px; overflow:auto; margin-top:10px; background:#fff; padding:10px;">🌐 Welcome to Internet Explorer<br>Type a website (e.g., https://example.com) or a search term.<br>Special keywords: sprunki, retrocore, youtube, google, 666</div>`; }
-    function initIE(win){ let inp=win.querySelector('#ieSearch'), btn=win.querySelector('#ieGo'), res=win.querySelector('#ieRes'); btn.onclick=()=>{ let q=inp.value.trim(); if(!q) return; let lower=q.toLowerCase(); if(lower==='sprunki') window.open('https://sprunki.com/','_blank'); else if(lower==='retrocore') window.open('https://krisxxxllkrisipurvanov-cpu.github.io/RetroCore/','_blank'); else if(lower==='youtube') window.open('https://youtube.com/','_blank'); else if(lower==='google') window.open('https://google.com/','_blank'); else if(lower==='666') res.innerHTML='<span style="color:red;">⚠️ Don\'t look out your window at 3am...</span>'; else if(q.startsWith('http://')||q.startsWith('https://')) window.open(q,'_blank'); else if(q.includes('.')) window.open('https://'+q,'_blank'); else window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank'); }; }
-    function cmdUI() { return `<div class="cmd-output" id="cmdOut">Windows Server 2026 CMD<br>Type 'help' for commands.<br></div><div class="cmd-input-line"><span class="cmd-prompt">C:\\></span><input id="cmdInp" class="cmd-input"></div>`; }
-    function initCMD(win) { let out=win.querySelector('#cmdOut'), inp=win.querySelector('#cmdInp'); function add(t,e=false){ let d=document.createElement('div'); d.style.color=e?'#f66':'#0f0'; d.innerHTML=t; out.appendChild(d); out.scrollTop=out.scrollHeight; } function proc(c){ c=c.trim().toLowerCase(); if(c==='help') add("Commands: open [app], delete [app], restart pc, shutdown pc, 666\nApps: paint, mypc, ie, notepad, games, store, office, cmd"); else if(c.startsWith('open ')){ let an=c.substring(5); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an] && !deletedApps.includes(map[an])){ launchApp(map[an]); add(`Opening ${an}...`); } else add(`Error: ${an} not found or deleted.`,true); } else if(c.startsWith('delete ')){ let an=c.substring(7); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an] && !deletedApps.includes(map[an])){ deletedApps.push(map[an]); renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); add(`${an} deleted.`); } else add(`Cannot delete ${an}.`,true); } else if(c==='restart pc'){ add("Restarting..."); setTimeout(()=>restart(),500); } else if(c==='shutdown pc'){ add("Shutting down..."); setTimeout(()=>shutdown(),500); } else if(c==='666'){ add("⚠️ FORBIDDEN! CHAOS ENGAGED ⚠️",true); setTimeout(()=>trigger666Chaos(),100); } else add(`'${c}' not recognized.`,true); } inp.addEventListener('keypress',e=>{ if(e.key==='Enter'){ let cmd=inp.value; if(cmd.trim()){ add(`C:\\> ${cmd}`); proc(cmd); } inp.value=''; } }); }
-    function storeUI(){ let html='<h3>Microsoft Store</h3><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">'; storeGames.forEach(g=>{ html+=`<div class="store-item" data-game="${g.id}" style="background:#d4cfb8;padding:10px;border-radius:8px;text-align:center;cursor:pointer;">${g.icon} ${g.name}<br><small>Click to install</small></div>`; }); html+='</div>'; return html; }
-    function initStore(win){ win.querySelectorAll('.store-item').forEach(el=>{ el.onclick=()=>{ let id=el.getAttribute('data-game'); let def=storeGames.find(g=>g.id===id); if(def) installGame(def); }; }); }
-    function gamesUI(){ return `<div><select id="gameSelect"><option value="snake">Snake</option><option value="tictactoe">Tic-Tac-Toe (Smart AI)</option><option value="pong">Pong</option></select><button id="resetGame">New</button></div><canvas id="gameCanvas" width="450" height="350" style="background:#1a2a1f;"></canvas><div id="gameStatus">Score:0</div>`; }
-    function initGames(win){ let canvas=win.querySelector('#gameCanvas'), ctx=canvas.getContext('2d'), sel=win.querySelector('#gameSelect'), reset=win.querySelector('#resetGame'), status=win.querySelector('#gameStatus'); let cur='snake', gameInt=null, pongInt=null; function stop(){ if(gameInt)clearInterval(gameInt); if(pongInt)clearInterval(pongInt); } function snake(){ stop(); let snake=[{x:10,y:10}], dir='RIGHT', food={x:15,y:10}, score=0; function draw(){ ctx.fillStyle='#1a2a1f'; ctx.fillRect(0,0,canvas.width,canvas.height); for(let i=0;i<snake.length;i++){ ctx.fillStyle=i===0?'#7ed957':'#3b8c2a'; ctx.fillRect(snake[i].x*20,snake[i].y*20,18,18); } ctx.fillStyle='#ff5252'; ctx.fillRect(food.x*20,food.y*20,18,18); status.innerText=`Score:${score}`; } function update(){ let head={...snake[0]}; if(dir==='RIGHT')head.x++; if(dir==='LEFT')head.x--; if(dir==='UP')head.y--; if(dir==='DOWN')head.y++; if(head.x<0||head.y<0||head.x>=20||head.y>=20||snake.some(s=>s.x===head.x&&s.y===head.y)){ clearInterval(gameInt); gameInt=null; status.innerText='Game Over'; return; } snake.unshift(head); if(head.x===food.x&&head.y===food.y){ score++; food={x:Math.floor(Math.random()*20),y:Math.floor(Math.random()*20)}; status.innerText=`Score:${score}`; }else snake.pop(); draw(); } function key(e){ if(e.key==='ArrowUp'&&dir!=='DOWN')dir='UP'; else if(e.key==='ArrowDown'&&dir!=='UP')dir='DOWN'; else if(e.key==='ArrowLeft'&&dir!=='RIGHT')dir='LEFT'; else if(e.key==='ArrowRight'&&dir!=='LEFT')dir='RIGHT'; } window.removeEventListener('keydown',window._snk); window._snk=key; window.addEventListener('keydown',window._snk); draw(); gameInt=setInterval(update,130); } function ttt(){ stop(); let board=Array(9).fill(null), turn='X', over=false; function drawBoard(){ ctx.fillStyle='#2c3e2b'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.strokeStyle='white'; for(let i=1;i<3;i++){ ctx.beginPath(); ctx.moveTo(i*150,0); ctx.lineTo(i*150,canvas.height); ctx.stroke(); ctx.moveTo(0,i*116); ctx.lineTo(canvas.width,i*116); ctx.stroke(); } for(let i=0;i<9;i++) if(board[i]){ let x=(i%3)*150+40, y=Math.floor(i/3)*116+50; ctx.font='48px Arial'; ctx.fillStyle=board[i]==='X'?'#ffaa66':'#66ccff'; ctx.fillText(board[i],x,y+10); } status.innerText=`Turn: ${turn}`; } function checkWinner(){ let l=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; for(let ll of l) if(board[ll[0]] && board[ll[0]]===board[ll[1]] && board[ll[1]]===board[ll[2]]) return board[ll[0]]; if(board.every(v=>v)) return 'tie'; return null; } function aiMove(){ let best=null; for(let i=0;i<9;i++) if(!board[i]){ let test=[...board]; test[i]='O'; if(checkWinner()==='O'){ best=i; break; } } if(best===null) for(let i=0;i<9;i++) if(!board[i]){ let test=[...board]; test[i]='X'; if(checkWinner()==='X'){ best=i; break; } } if(best===null && !board[4]) best=4; if(best===null){ let corners=[0,2,6,8]; for(let c of corners) if(!board[c]){ best=c; break; } } if(best===null) for(let i=0;i<9;i++) if(!board[i]){ best=i; break; } if(best!==null){ board[best]='O'; let w=checkWinner(); if(w){ over=true; status.innerText=w==='tie'?'Tie!':`O wins!`; drawBoard(); return; } turn='X'; drawBoard(); } } function handleClick(e){ if(over || turn!=='X') return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy; let col=Math.floor(mx/150), row=Math.floor(my/116); if(col>=0 && col<3 && row>=0 && row<3){ let idx=row*3+col; if(!board[idx]){ board[idx]='X'; let w=checkWinner(); if(w){ over=true; status.innerText=w==='tie'?'Tie!':`X wins!`; drawBoard(); return; } turn='O'; drawBoard(); if(!over) aiMove(); } } } canvas.removeEventListener('click',window._ttt); window._ttt=handleClick; canvas.addEventListener('click',window._ttt); drawBoard(); } function pong(){ stop(); let ballX=canvas.width/2,ballY=canvas.height/2,ballDX=2,ballDY=2,paddleY=canvas.height/2-40,aiY=canvas.height/2-40,ps=0,as=0; function draw(){ ctx.fillStyle='#1a2a1f'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='white'; ctx.fillRect(10,paddleY,10,80); ctx.fillRect(canvas.width-20,aiY,10,80); ctx.beginPath(); ctx.arc(ballX,ballY,6,0,Math.PI*2); ctx.fill(); status.innerText=`Player:${ps} AI:${as}`; } function update(){ ballX+=ballDX; ballY+=ballDY; if(ballY<0||ballY>canvas.height)ballDY=-ballDY; if(ballX<20&&ballX>10&&ballY>paddleY&&ballY<paddleY+80)ballDX=-ballDX; if(ballX>canvas.width-25&&ballX<canvas.width-10&&ballY>aiY&&ballY<aiY+80)ballDX=-ballDX; if(ballX<0){ as++; reset(); } if(ballX>canvas.width){ ps++; reset(); } let aiCenter=aiY+40; if(aiCenter<ballY-20)aiY+=3; else if(aiCenter>ballY+20)aiY-=3; aiY=Math.min(Math.max(aiY,0),canvas.height-80); draw(); } function reset(){ ballX=canvas.width/2; ballY=canvas.height/2; ballDX=(Math.random()>0.5?2:-2); ballDY=(Math.random()>0.5?2:-2); } function movePaddle(e){ let rect=canvas.getBoundingClientRect(); let my=(e.clientY-rect.top)*(canvas.height/rect.height); paddleY=Math.min(Math.max(my-40,0),canvas.height-80); } canvas.removeEventListener('mousemove',window._pong); window._pong=movePaddle; canvas.addEventListener('mousemove',window._pong); pongInt=setInterval(update,1000/60); draw(); } function switchGame(){ cur=sel.value; stop(); if(cur==='snake') snake(); else if(cur==='tictactoe') ttt(); else pong(); } sel.addEventListener('change',switchGame); reset.addEventListener('click',switchGame); switchGame(); }
-
-    // --- PICTURES GALLERY (random images from Lorem Picsum) ---
     function openPicturesGallery() {
         const galleryId = 'pictures_gallery_' + Date.now();
         const galleryHtml = `<div><h3>📷 Pictures Gallery</h3><div id="${galleryId}" class="picture-gallery"></div><p style="margin-top:10px;">Click any image to view full size.</p></div>`;
@@ -520,7 +658,7 @@
         });
     }
 
-    // --- ENHANCED SETTINGS with Reset this PC button ---
+    // --- ENHANCED SETTINGS with new options and Reset this PC ---
     function openSettings() {
         const wallpapers = [
             { name: "Classic Green", type: "color", value: "#1b4d2e" },
@@ -539,9 +677,12 @@
                 <label>Taskbar Height: <input type="range" id="th" min="32" max="64" value="${taskbarHeight}"></label><br>
                 <label>Font Size: <input type="range" id="fs" min="10" max="20" value="${fontSize}"></label><br>
                 <label>Window Border Radius: <input type="range" id="br" min="0" max="20" value="${borderRadius}"></label><br>
+                <label>Window Opacity: <input type="range" id="wo" min="0.5" max="1" step="0.01" value="${windowOpacity}"></label><br>
                 <label>Animations: <input type="checkbox" id="anim" ${animations?'checked':''}></label><br>
                 <label>Accent Color: <input type="color" id="accent" value="${accentColor}"></label><br>
                 <label>Taskbar Transparency: <input type="range" id="tran" min="0.5" max="1" step="0.01" value="${taskbarTransparency}"></label><br>
+                <label>Mouse Pointer Style:</label><select id="mouse"><option value="default">Default</option><option value="pointer">Pointer</option><option value="crosshair">Crosshair</option></select><br>
+                <label>Double-click speed (ms): <input type="range" id="dbl" min="200" max="1000" step="50" value="${doubleClickSpeed}"></label><br>
                 <label>Show hidden files in My PC: <input type="checkbox" id="hiddenFiles" ${showHiddenFiles?'checked':''}></label><br>
                 
                 <h4>Ready Wallpapers</h4>
@@ -623,7 +764,7 @@
             alert("Wallpaper reset to solid color.");
         };
         resetPCBtn.onclick = () => {
-            win.close(); // close settings window
+            win.close();
             resetAllData();
         };
         applyBtn.onclick = () => {
@@ -632,28 +773,27 @@
             taskbarHeight = parseInt(win.querySelector('#th').value);
             fontSize = parseInt(win.querySelector('#fs').value);
             borderRadius = parseInt(win.querySelector('#br').value);
+            windowOpacity = parseFloat(win.querySelector('#wo').value);
             animations = win.querySelector('#anim').checked;
             taskbarAutoHide = win.querySelector('#ah').checked;
             accentColor = win.querySelector('#accent').value;
             taskbarTransparency = parseFloat(win.querySelector('#tran').value);
             showHiddenFiles = win.querySelector('#hiddenFiles').checked;
+            doubleClickSpeed = parseInt(win.querySelector('#dbl').value);
+            mouseStyle = win.querySelector('#mouse').value;
             let theme = win.querySelector('#thm').value;
             desktopBgColor = theme === 'green' ? '#1b4d2e' : (theme === 'blue' ? '#1e3a5f' : '#0a0f1a');
             if (!wallpaperUrl && !wallpaperDataURL) desktopDiv.style.backgroundColor = desktopBgColor;
             applyDesktopSettings();
             autoArrangeIcons();
             applyAccentAndTaskbar();
+            applyExtraSettings();
             saveState();
             alert("Settings applied!");
         };
     }
 
-    function showRunDialog() { let cmd=prompt("Run command:\nopen [app], delete [app], restart pc, shutdown pc, 666"); if(!cmd) return; let c=cmd.trim().toLowerCase(); if(c.startsWith('open ')) { let an=c.substring(5); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an]) launchApp(map[an]); } else if(c.startsWith('delete ')) { let an=c.substring(7); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an] && !deletedApps.includes(map[an])) { deletedApps.push(map[an]); renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); saveState(); } } else if(c==='restart pc') restart(); else if(c==='shutdown pc') shutdown(); else if(c==='666') trigger666Chaos(); else alert("Invalid"); }
-    function shutdown() { bootScreen.style.display='flex'; desktopDiv.style.display='none'; alert("Shutdown."); }
-    function restart() { bootScreen.style.display='flex'; desktopDiv.style.display='none'; setTimeout(()=>location.reload(),800); }
-    function launchApp(id) { if(openWindows.has(id)) { openWindows.get(id).windowElement.style.display='flex'; return; } if(id==='recycleBin'){ if(openWindows.has('recycleBin')) openWindows.get('recycleBin').windowElement.style.display='flex'; else { let win=createWindow('Recycle Bin','<div>Loading...</div>','recycleBin'); document.body.appendChild(win); refreshRecycleBin(); } return; } let def=APP_LIST.find(a=>a.id===id); if(!def) return; let content='', init=null; if(id==='paint') { content=paintUI(); init=initPaint; } else if(id==='myPC') { content=myPCUI(); init=(win)=>{ attachMyPCListeners(win); }; } else if(id==='ie') { content=ieUI(); init=initIE; } else if(id==='notepad') { content=notepadUI(); init=initNotepad; } else if(id==='games') { content=gamesUI(); init=initGames; } else if(id==='store') { content=storeUI(); init=initStore; } else if(id==='office') { content=officeUI(); init=null; } else if(id==='cmd') { content=cmdUI(); init=initCMD; } else return; let win=createWindow(def.name,content,id); document.body.appendChild(win); if(init) init(win); }
-
-    // --- BSOD / SYSTEM32 ---
+    // --- BSOD / SYSTEM32 (unchanged) ---
     let draggedItemType=null;
     function handleFileDragStart(e) { let t=e.target.closest('.file-item'); if(t && t.getAttribute('data-file')==='system32') { draggedItemType='system32'; e.dataTransfer.setData('text/plain','system32'); e.target.style.opacity='0.6'; } else e.preventDefault(); }
     function handleFileDragEnd(e) { if(e.target) e.target.style.opacity=''; draggedItemType=null; }
@@ -662,7 +802,7 @@
     function trigger666Chaos() { if(isBsodActive) return; let chaos=document.createElement('div'); chaos.className='chaos-overlay'; chaos.innerHTML='<div class="error-text">⚠️ 666 SYSTEM CORRUPTION ⚠️</div>'; document.body.appendChild(chaos); setTimeout(()=>{ chaos.remove(); triggerBSOD(); },3000); }
     function openSystem32Code() { let code=`// Windows Server 2026 Kernel\n// System32 Core\nconst kernel = { version:"2026", build:26001 };\nfunction init() { return "System ready"; }`; let win=createWindow("System32 Source",`<pre style="background:#1e1e1e; color:#d4d4d4; padding:12px;">${code}</pre>`,"system32_code"); document.body.appendChild(win); }
 
-    // --- RIGHT-CLICK CONTEXT MENU (Desktop & Taskbar)---
+    // --- RIGHT-CLICK CONTEXT MENU (Desktop & Taskbar) ---
     let activeContextMenu = null;
     function showContextMenu(x, y, targetIcon) {
         if (activeContextMenu) activeContextMenu.remove();
@@ -703,16 +843,49 @@
     document.getElementById('picturesBtn').addEventListener('click', () => { openPicturesGallery(); startMenu.classList.remove('show'); });
     document.getElementById('calendarBtn').addEventListener('click', () => { openCalendar(); startMenu.classList.remove('show'); });
     document.getElementById('calculatorBtn').addEventListener('click', () => { openCalculator(); startMenu.classList.remove('show'); });
+    document.getElementById('msAccountBtn').addEventListener('click', () => { openMicrosoftAccountUI(); startMenu.classList.remove('show'); });
     document.getElementById('runBtn').addEventListener('click',()=>{ showRunDialog(); startMenu.classList.remove('show'); });
     document.getElementById('settingsBtn').addEventListener('click',()=>{ openSettings(); startMenu.classList.remove('show'); });
     document.getElementById('shutdownBtn').addEventListener('click',()=>{ shutdown(); startMenu.classList.remove('show'); });
     document.getElementById('restartBtn').addEventListener('click',()=>{ restart(); startMenu.classList.remove('show'); });
     document.getElementById('aiChatBtn').addEventListener('click', () => { window.open('https://chat.deepseek.com/', '_blank'); startMenu.classList.remove('show'); });
     
+    function showRunDialog() { let cmd=prompt("Run command:\nopen [app], delete [app], restart pc, shutdown pc, 666"); if(!cmd) return; let c=cmd.trim().toLowerCase(); if(c.startsWith('open ')) { let an=c.substring(5); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an]) launchApp(map[an]); } else if(c.startsWith('delete ')) { let an=c.substring(7); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an] && !deletedApps.includes(map[an])) { deletedApps.push(map[an]); renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); saveState(); } } else if(c==='restart pc') restart(); else if(c==='shutdown pc') shutdown(); else if(c==='666') trigger666Chaos(); else alert("Invalid"); }
+    function shutdown() { bootScreen.style.display='flex'; desktopDiv.style.display='none'; alert("Shutdown."); }
+    function restart() { bootScreen.style.display='flex'; desktopDiv.style.display='none'; setTimeout(()=>location.reload(),800); }
+    function launchApp(id) { if(openWindows.has(id)) { openWindows.get(id).windowElement.style.display='flex'; return; } if(id==='recycleBin'){ if(openWindows.has('recycleBin')) openWindows.get('recycleBin').windowElement.style.display='flex'; else { let win=createWindow('Recycle Bin','<div>Loading...</div>','recycleBin'); document.body.appendChild(win); refreshRecycleBin(); } return; } let def=APP_LIST.find(a=>a.id===id); if(!def) return; let content='', init=null; if(id==='paint') { content=paintUI(); init=initPaint; } else if(id==='myPC') { content=myPCUI(); init=(win)=>{ attachMyPCListeners(win); }; } else if(id==='ie') { content=ieUI(); init=initIE; } else if(id==='notepad') { content=notepadUI(); init=initNotepad; } else if(id==='games') { content=gamesUI(); init=initGames; } else if(id==='store') { content=storeUI(); init=initStore; } else if(id==='office') { content=officeUI(); init=null; } else if(id==='cmd') { content=cmdUI(); init=initCMD; } else return; let win=createWindow(def.name,content,id); document.body.appendChild(win); if(init) init(win); }
+
     function escapeHtml(s){ return s.replace(/[&<>]/g,m=> m==='&'?'&amp;': m==='<'?'&lt;':'&gt;'); }
     
+    // Load account and state before boot
+    loadAccount();
     const hasSaved = loadState();
-    setTimeout(()=>{ bootScreen.style.opacity='0'; setTimeout(()=>{ bootScreen.style.display='none'; desktopDiv.style.display='block'; renderDesktopIcons(); if(!hasSaved) autoArrangeIcons(); saveState(); },600); },2600);
+    
+    // --- BOOT SOUND SETUP ---
+    bootAudio = new Audio("https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/windows-server-2003-uk-startup-sound.mp3");
+    bootAudio.load();
+    const soundMsg = document.getElementById('bootSoundMsg');
+    let soundPlayed = false;
+    
+    function attemptPlaySound() {
+        if (soundPlayed) return;
+        bootAudio.play().then(() => {
+            soundPlayed = true;
+            if (soundMsg) soundMsg.style.display = 'none';
+        }).catch(e => {
+            console.log("Autoplay blocked, showing manual play button");
+            if (soundMsg) soundMsg.style.display = 'block';
+        });
+    }
+    
+    if (soundMsg) {
+        soundMsg.onclick = () => {
+            bootAudio.play().catch(e => console.log("Manual play failed", e));
+            soundMsg.style.display = 'none';
+        };
+    }
+    
+    setTimeout(()=>{ bootScreen.style.opacity='0'; setTimeout(()=>{ bootScreen.style.display='none'; desktopDiv.style.display='block'; renderDesktopIcons(); if(!hasSaved) autoArrangeIcons(); saveState(); attemptPlaySound(); },600); },2600);
     window.addEventListener('beforeunload', () => { saveState(); });
 </script>
 </body>
