@@ -88,6 +88,8 @@
         .boot-welcome-content h2 { margin-bottom: 20px; color: #1b4332; }
         .boot-welcome-content button { padding: 8px 24px; background: #2c5a3e; color: white; border: none; border-radius: 20px; font-size: 16px; cursor: pointer; margin-top: 20px; }
         .boot-welcome-content button:hover { background: #40916c; }
+        /* Snake canvas specific */
+        #gameCanvas { display: block; margin: 0 auto; border: 2px solid #3a5e6e; }
     </style>
 </head>
 <body>
@@ -408,7 +410,6 @@
                 span.style.textShadow = 'none';
             }
         });
-        // Update icon label backgrounds
         document.querySelectorAll('.desktop-icon').forEach(icon => {
             icon.style.background = `rgba(0,0,0,${iconLabelTransparency})`;
         });
@@ -730,8 +731,102 @@
     function initIE(win){ let inp=win.querySelector('#ieSearch'), btn=win.querySelector('#ieGo'), res=win.querySelector('#ieRes'); btn.onclick=()=>{ let q=inp.value.trim(); if(!q) return; let lower=q.toLowerCase(); if(lower==='sprunki') window.open('https://sprunki.com/','_blank'); else if(lower==='retrocore') window.open('https://krisxxxllkrisipurvanov-cpu.github.io/RetroCore/','_blank'); else if(lower==='youtube') window.open('https://youtube.com/','_blank'); else if(lower==='google') window.open('https://google.com/','_blank'); else if(lower==='666') res.innerHTML='<span style="color:red;">⚠️ Don\'t look out your window at 3am...</span>'; else if(q.startsWith('http://')||q.startsWith('https://')) window.open(q,'_blank'); else if(q.includes('.')) window.open('https://'+q,'_blank'); else window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank'); }; }
     function cmdUI() { return `<div class="cmd-output" id="cmdOut">Windows Server 2026 CMD<br>Type 'help' for commands.<br></div><div class="cmd-input-line"><span class="cmd-prompt">C:\\></span><input id="cmdInp" class="cmd-input"></div>`; }
     function initCMD(win) { let out=win.querySelector('#cmdOut'), inp=win.querySelector('#cmdInp'); function add(t,e=false){ let d=document.createElement('div'); d.style.color=e?'#f66':'#0f0'; d.innerHTML=t; out.appendChild(d); out.scrollTop=out.scrollHeight; } function proc(c){ c=c.trim().toLowerCase(); if(c==='help') add("Commands: open [app], delete [app], restart pc, shutdown pc, 666\nApps: paint, mypc, ie, notepad, games, store, office, cmd"); else if(c.startsWith('open ')){ let an=c.substring(5); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an] && !deletedApps.includes(map[an])){ launchApp(map[an]); add(`Opening ${an}...`); } else add(`Error: ${an} not found or deleted.`,true); } else if(c.startsWith('delete ')){ let an=c.substring(7); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an] && !deletedApps.includes(map[an])){ deletedApps.push(map[an]); renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); add(`${an} deleted.`); } else add(`Cannot delete ${an}.`,true); } else if(c==='restart pc'){ add("Restarting..."); setTimeout(()=>restart(),500); } else if(c==='shutdown pc'){ add("Shutting down..."); setTimeout(()=>shutdown(),500); } else if(c==='666'){ add("⚠️ FORBIDDEN! CHAOS ENGAGED ⚠️",true); setTimeout(()=>trigger666Chaos(),100); } else add(`'${c}' not recognized.`,true); } inp.addEventListener('keypress',e=>{ if(e.key==='Enter'){ let cmd=inp.value; if(cmd.trim()){ add(`C:\\> ${cmd}`); proc(cmd); } inp.value=''; } }); }
-    function gamesUI(){ return `<div><select id="gameSelect"><option value="snake">Snake</option><option value="tictactoe">Tic-Tac-Toe (Smart AI)</option><option value="pong">Pong</option></select><button id="resetGame">New</button></div><canvas id="gameCanvas" width="450" height="350" style="background:#1a2a1f;"></canvas><div id="gameStatus">Score:0</div>`; }
-    function initGames(win){ let canvas=win.querySelector('#gameCanvas'), ctx=canvas.getContext('2d'), sel=win.querySelector('#gameSelect'), reset=win.querySelector('#resetGame'), status=win.querySelector('#gameStatus'); let cur='snake', gameInt=null, pongInt=null; function stop(){ if(gameInt)clearInterval(gameInt); if(pongInt)clearInterval(pongInt); } function snake(){ stop(); let snake=[{x:10,y:10}], dir='RIGHT', food={x:15,y:10}, score=0; function draw(){ ctx.fillStyle='#1a2a1f'; ctx.fillRect(0,0,canvas.width,canvas.height); for(let i=0;i<snake.length;i++){ ctx.fillStyle=i===0?'#7ed957':'#3b8c2a'; ctx.fillRect(snake[i].x*20,snake[i].y*20,18,18); } ctx.fillStyle='#ff5252'; ctx.fillRect(food.x*20,food.y*20,18,18); status.innerText=`Score:${score}`; } function update(){ let head={...snake[0]}; if(dir==='RIGHT')head.x++; if(dir==='LEFT')head.x--; if(dir==='UP')head.y--; if(dir==='DOWN')head.y++; if(head.x<0||head.y<0||head.x>=20||head.y>=20||snake.some(s=>s.x===head.x&&s.y===head.y)){ clearInterval(gameInt); gameInt=null; status.innerText='Game Over'; return; } snake.unshift(head); if(head.x===food.x&&head.y===food.y){ score++; food={x:Math.floor(Math.random()*20),y:Math.floor(Math.random()*20)}; status.innerText=`Score:${score}`; }else snake.pop(); draw(); } function key(e){ if(e.key==='ArrowUp'&&dir!=='DOWN')dir='UP'; else if(e.key==='ArrowDown'&&dir!=='UP')dir='DOWN'; else if(e.key==='ArrowLeft'&&dir!=='RIGHT')dir='LEFT'; else if(e.key==='ArrowRight'&&dir!=='LEFT')dir='RIGHT'; } window.removeEventListener('keydown',window._snk); window._snk=key; window.addEventListener('keydown',window._snk); draw(); gameInt=setInterval(update,130); } function ttt(){ stop(); let board=Array(9).fill(null), turn='X', over=false; function drawBoard(){ ctx.fillStyle='#2c3e2b'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.strokeStyle='white'; for(let i=1;i<3;i++){ ctx.beginPath(); ctx.moveTo(i*150,0); ctx.lineTo(i*150,canvas.height); ctx.stroke(); ctx.moveTo(0,i*116); ctx.lineTo(canvas.width,i*116); ctx.stroke(); } for(let i=0;i<9;i++) if(board[i]){ let x=(i%3)*150+40, y=Math.floor(i/3)*116+50; ctx.font='48px Arial'; ctx.fillStyle=board[i]==='X'?'#ffaa66':'#66ccff'; ctx.fillText(board[i],x,y+10); } status.innerText=`Turn: ${turn}`; } function checkWinner(){ let l=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; for(let ll of l) if(board[ll[0]] && board[ll[0]]===board[ll[1]] && board[ll[1]]===board[ll[2]]) return board[ll[0]]; if(board.every(v=>v)) return 'tie'; return null; } function aiMove(){ let best=null; for(let i=0;i<9;i++) if(!board[i]){ let test=[...board]; test[i]='O'; if(checkWinner()==='O'){ best=i; break; } } if(best===null) for(let i=0;i<9;i++) if(!board[i]){ let test=[...board]; test[i]='X'; if(checkWinner()==='X'){ best=i; break; } } if(best===null && !board[4]) best=4; if(best===null){ let corners=[0,2,6,8]; for(let c of corners) if(!board[c]){ best=c; break; } } if(best===null) for(let i=0;i<9;i++) if(!board[i]){ best=i; break; } if(best!==null){ board[best]='O'; let w=checkWinner(); if(w){ over=true; status.innerText=w==='tie'?'Tie!':`O wins!`; drawBoard(); return; } turn='X'; drawBoard(); } } function handleClick(e){ if(over || turn!=='X') return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy; let col=Math.floor(mx/150), row=Math.floor(my/116); if(col>=0 && col<3 && row>=0 && row<3){ let idx=row*3+col; if(!board[idx]){ board[idx]='X'; let w=checkWinner(); if(w){ over=true; status.innerText=w==='tie'?'Tie!':`X wins!`; drawBoard(); return; } turn='O'; drawBoard(); if(!over) aiMove(); } } } canvas.removeEventListener('click',window._ttt); window._ttt=handleClick; canvas.addEventListener('click',window._ttt); drawBoard(); } function pong(){ stop(); let ballX=canvas.width/2,ballY=canvas.height/2,ballDX=2,ballDY=2,paddleY=canvas.height/2-40,aiY=canvas.height/2-40,ps=0,as=0; function draw(){ ctx.fillStyle='#1a2a1f'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='white'; ctx.fillRect(10,paddleY,10,80); ctx.fillRect(canvas.width-20,aiY,10,80); ctx.beginPath(); ctx.arc(ballX,ballY,6,0,Math.PI*2); ctx.fill(); status.innerText=`Player:${ps} AI:${as}`; } function update(){ ballX+=ballDX; ballY+=ballDY; if(ballY<0||ballY>canvas.height)ballDY=-ballDY; if(ballX<20&&ballX>10&&ballY>paddleY&&ballY<paddleY+80)ballDX=-ballDX; if(ballX>canvas.width-25&&ballX<canvas.width-10&&ballY>aiY&&ballY<aiY+80)ballDX=-ballDX; if(ballX<0){ as++; reset(); } if(ballX>canvas.width){ ps++; reset(); } let aiCenter=aiY+40; if(aiCenter<ballY-20)aiY+=3; else if(aiCenter>ballY+20)aiY-=3; aiY=Math.min(Math.max(aiY,0),canvas.height-80); draw(); } function reset(){ ballX=canvas.width/2; ballY=canvas.height/2; ballDX=(Math.random()>0.5?2:-2); ballDY=(Math.random()>0.5?2:-2); } function movePaddle(e){ let rect=canvas.getBoundingClientRect(); let my=(e.clientY-rect.top)*(canvas.height/rect.height); paddleY=Math.min(Math.max(my-40,0),canvas.height-80); } canvas.removeEventListener('mousemove',window._pong); window._pong=movePaddle; canvas.addEventListener('mousemove',window._pong); pongInt=setInterval(update,1000/60); draw(); } function switchGame(){ cur=sel.value; stop(); if(cur==='snake') snake(); else if(cur==='tictactoe') ttt(); else pong(); } sel.addEventListener('change',switchGame); reset.addEventListener('click',switchGame); switchGame(); }
+    function gamesUI(){ return `<div><select id="gameSelect"><option value="snake">Snake</option><option value="tictactoe">Tic-Tac-Toe (Smart AI)</option><option value="pong">Pong</option></select><button id="resetGame">New</button></div><canvas id="gameCanvas" width="400" height="400" style="background:#1a2a1f;"></canvas><div id="gameStatus">Score:0</div>`; }
+    function initGames(win){ 
+        let canvas=win.querySelector('#gameCanvas'), ctx=canvas.getContext('2d'), sel=win.querySelector('#gameSelect'), reset=win.querySelector('#resetGame'), status=win.querySelector('#gameStatus'); 
+        let cur='snake', gameInt=null, pongInt=null; 
+        function stop(){ if(gameInt)clearInterval(gameInt); if(pongInt)clearInterval(pongInt); }
+        function snake(){ 
+            stop(); 
+            let snake=[{x:10,y:10}], dir='RIGHT', nextDir='RIGHT', food={x:15,y:10}, score=0, gameOver=false;
+            function draw(){ 
+                ctx.fillStyle='#1a2a1f'; ctx.fillRect(0,0,canvas.width,canvas.height); 
+                for(let i=0;i<snake.length;i++){ 
+                    ctx.fillStyle=i===0?'#7ed957':'#3b8c2a'; 
+                    ctx.fillRect(snake[i].x*20,snake[i].y*20,18,18); 
+                } 
+                ctx.fillStyle='#ff5252'; 
+                ctx.fillRect(food.x*20,food.y*20,18,18); 
+                status.innerText=`Score:${score}`; 
+            } 
+            function generateFood() {
+                let freeCells = [];
+                for (let x=0; x<20; x++) {
+                    for (let y=0; y<20; y++) {
+                        if (!snake.some(segment => segment.x === x && segment.y === y)) {
+                            freeCells.push({x,y});
+                        }
+                    }
+                }
+                if (freeCells.length === 0) {
+                    gameOver = true;
+                    status.innerText = 'You win!';
+                    clearInterval(gameInt);
+                    gameInt = null;
+                    return false;
+                }
+                let rand = Math.floor(Math.random() * freeCells.length);
+                food = freeCells[rand];
+                return true;
+            }
+            function update(){ 
+                if (gameOver) return;
+                dir = nextDir;
+                let head={...snake[0]}; 
+                if(dir==='RIGHT')head.x++; 
+                if(dir==='LEFT')head.x--; 
+                if(dir==='UP')head.y--; 
+                if(dir==='DOWN')head.y++; 
+                if(head.x<0||head.y<0||head.x>=20||head.y>=20||snake.some(s=>s.x===head.x&&s.y===head.y)){ 
+                    clearInterval(gameInt); gameInt=null; 
+                    status.innerText='Game Over'; 
+                    gameOver = true;
+                    draw();
+                    return; 
+                } 
+                snake.unshift(head); 
+                if(head.x===food.x&&head.y===food.y){ 
+                    score++; 
+                    if (!generateFood()) return;
+                    status.innerText=`Score:${score}`; 
+                } else { 
+                    snake.pop(); 
+                } 
+                draw(); 
+            } 
+            function key(e){ 
+                const key = e.key;
+                if (key==='ArrowUp'&&dir!=='DOWN') nextDir='UP'; 
+                else if (key==='ArrowDown'&&dir!=='UP') nextDir='DOWN'; 
+                else if (key==='ArrowLeft'&&dir!=='RIGHT') nextDir='LEFT'; 
+                else if (key==='ArrowRight'&&dir!=='LEFT') nextDir='RIGHT'; 
+                e.preventDefault();
+            } 
+            window.removeEventListener('keydown',window._snk); 
+            window._snk=key; 
+            window.addEventListener('keydown',window._snk); 
+            draw(); 
+            gameInt=setInterval(update,130); 
+        } 
+        function ttt(){ /* unchanged */ 
+            stop(); let board=Array(9).fill(null), turn='X', over=false; 
+            function drawBoard(){ ctx.fillStyle='#2c3e2b'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.strokeStyle='white'; for(let i=1;i<3;i++){ ctx.beginPath(); ctx.moveTo(i*150,0); ctx.lineTo(i*150,canvas.height); ctx.stroke(); ctx.moveTo(0,i*116); ctx.lineTo(canvas.width,i*116); ctx.stroke(); } for(let i=0;i<9;i++) if(board[i]){ let x=(i%3)*150+40, y=Math.floor(i/3)*116+50; ctx.font='48px Arial'; ctx.fillStyle=board[i]==='X'?'#ffaa66':'#66ccff'; ctx.fillText(board[i],x,y+10); } status.innerText=`Turn: ${turn}`; } 
+            function checkWinner(){ let l=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; for(let ll of l) if(board[ll[0]] && board[ll[0]]===board[ll[1]] && board[ll[1]]===board[ll[2]]) return board[ll[0]]; if(board.every(v=>v)) return 'tie'; return null; } 
+            function aiMove(){ let best=null; for(let i=0;i<9;i++) if(!board[i]){ let test=[...board]; test[i]='O'; if(checkWinner()==='O'){ best=i; break; } } if(best===null) for(let i=0;i<9;i++) if(!board[i]){ let test=[...board]; test[i]='X'; if(checkWinner()==='X'){ best=i; break; } } if(best===null && !board[4]) best=4; if(best===null){ let corners=[0,2,6,8]; for(let c of corners) if(!board[c]){ best=c; break; } } if(best===null) for(let i=0;i<9;i++) if(!board[i]){ best=i; break; } if(best!==null){ board[best]='O'; let w=checkWinner(); if(w){ over=true; status.innerText=w==='tie'?'Tie!':`O wins!`; drawBoard(); return; } turn='X'; drawBoard(); } } 
+            function handleClick(e){ if(over || turn!=='X') return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy; let col=Math.floor(mx/133), row=Math.floor(my/133); if(col>=0 && col<3 && row>=0 && row<3){ let idx=row*3+col; if(!board[idx]){ board[idx]='X'; let w=checkWinner(); if(w){ over=true; status.innerText=w==='tie'?'Tie!':`X wins!`; drawBoard(); return; } turn='O'; drawBoard(); if(!over) aiMove(); } } } 
+            canvas.removeEventListener('click',window._ttt); window._ttt=handleClick; canvas.addEventListener('click',window._ttt); drawBoard(); 
+        } 
+        function pong(){ /* unchanged */ 
+            stop(); let ballX=canvas.width/2,ballY=canvas.height/2,ballDX=2,ballDY=2,paddleY=canvas.height/2-40,aiY=canvas.height/2-40,ps=0,as=0; 
+            function draw(){ ctx.fillStyle='#1a2a1f'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='white'; ctx.fillRect(10,paddleY,10,80); ctx.fillRect(canvas.width-20,aiY,10,80); ctx.beginPath(); ctx.arc(ballX,ballY,6,0,Math.PI*2); ctx.fill(); status.innerText=`Player:${ps} AI:${as}`; } 
+            function update(){ ballX+=ballDX; ballY+=ballDY; if(ballY<0||ballY>canvas.height)ballDY=-ballDY; if(ballX<20&&ballX>10&&ballY>paddleY&&ballY<paddleY+80)ballDX=-ballDX; if(ballX>canvas.width-25&&ballX<canvas.width-10&&ballY>aiY&&ballY<aiY+80)ballDX=-ballDX; if(ballX<0){ as++; reset(); } if(ballX>canvas.width){ ps++; reset(); } let aiCenter=aiY+40; if(aiCenter<ballY-20)aiY+=3; else if(aiCenter>ballY+20)aiY-=3; aiY=Math.min(Math.max(aiY,0),canvas.height-80); draw(); } 
+            function reset(){ ballX=canvas.width/2; ballY=canvas.height/2; ballDX=(Math.random()>0.5?2:-2); ballDY=(Math.random()>0.5?2:-2); } 
+            function movePaddle(e){ let rect=canvas.getBoundingClientRect(); let my=(e.clientY-rect.top)*(canvas.height/rect.height); paddleY=Math.min(Math.max(my-40,0),canvas.height-80); } 
+            canvas.removeEventListener('mousemove',window._pong); window._pong=movePaddle; canvas.addEventListener('mousemove',window._pong); pongInt=setInterval(update,1000/60); draw(); 
+        } 
+        function switchGame(){ cur=sel.value; stop(); if(cur==='snake') snake(); else if(cur==='tictactoe') ttt(); else pong(); } 
+        sel.addEventListener('change',switchGame); reset.addEventListener('click',switchGame); switchGame(); 
+    }
 
     // --- MY PC with clickable files ---
     function getRandomFileContent(name) {
@@ -900,12 +995,16 @@
         }
     }
 
-    // --- ENHANCED SETTINGS with Installed Apps section and Label Transparency ---
+    // --- ENHANCED SETTINGS with Installed Apps section, Label Transparency, and Rainbow Wallpaper ---
     function openSettings() {
+        // Proper rainbow SVG data URI that works
+        const rainbowSVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23ff0000'/%3E%3Cstop offset='17%25' stop-color='%23ff7f00'/%3E%3Cstop offset='33%25' stop-color='%23ffff00'/%3E%3Cstop offset='50%25' stop-color='%2300ff00'/%3E%3Cstop offset='67%25' stop-color='%230000ff'/%3E%3Cstop offset='83%25' stop-color='%234b0082'/%3E%3Cstop offset='100%25' stop-color='%238f00ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' fill='url(%23g)'/%3E%3C/svg%3E";
+        
         const wallpapers = [
             { name: "Classic Green", type: "color", value: "#1b4d2e" },
             { name: "Windows Blue", type: "color", value: "#1e3a5f" },
             { name: "Dark Mode", type: "color", value: "#0a0f1a" },
+            { name: "Rainbow", type: "url", value: rainbowSVG },
             { name: "Server 2026", type: "url", value: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Windows-Server-2026.png" },
             { name: "Forest", type: "url", value: "https://picsum.photos/id/104/1920/1080" },
             { name: "Ocean", type: "url", value: "https://picsum.photos/id/23/1920/1080" },
