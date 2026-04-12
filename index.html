@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Windows Server 2026 | KrisXxXLL</title>
-    <!-- Site icon (favicon) -->
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/window.png">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
@@ -82,6 +81,13 @@
         .pinterest-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; padding: 10px; max-height: 350px; overflow-y: auto; }
         .pinterest-img { width: 100%; height: 140px; object-fit: cover; border-radius: 8px; cursor: pointer; transition: transform 0.1s; border: 2px solid #ccc; }
         .pinterest-img:hover { transform: scale(1.02); border-color: #2c5a3e; }
+        .welcome-gallery { display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        .welcome-gallery img { max-width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border: 2px solid #ccc; }
+        .boot-welcome-window { width: 400px; height: auto; min-height: unset; }
+        .boot-welcome-content { text-align: center; padding: 20px; }
+        .boot-welcome-content h2 { margin-bottom: 20px; color: #1b4332; }
+        .boot-welcome-content button { padding: 8px 24px; background: #2c5a3e; color: white; border: none; border-radius: 20px; font-size: 16px; cursor: pointer; margin-top: 20px; }
+        .boot-welcome-content button:hover { background: #40916c; }
     </style>
 </head>
 <body>
@@ -114,6 +120,7 @@
             <li id="calendarBtn">📅 Calendar</li>
             <li id="calculatorBtn">🧮 Calculator</li>
             <li id="msAccountBtn">👤 Microsoft Account</li>
+            <li id="welcomeBtn">🎉 Welcome to Windows Server 2026</li>
             <div class="divider"></div>
             <li data-folder="documents">📄 Documents</li>
             <li id="picturesBtn">🖼️ Pictures</li>
@@ -213,19 +220,16 @@
     function initBootSound() {
         if (!startupSoundEnabled) return;
 
-        // Create audio element
         bootAudio = new Audio("https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/windows-server-2003-uk-startup-sound.mp3");
         bootAudio.load();
 
         const soundMsg = document.getElementById('bootSoundMsg');
 
-        // Function to attempt playback
         const playSound = () => {
             if (soundPlayed || !bootAudio) return;
             bootAudio.play().then(() => {
                 soundPlayed = true;
                 if (soundMsg) soundMsg.style.display = 'none';
-                // Remove listeners after success
                 cleanup();
             }).catch(err => {
                 console.warn("Autoplay blocked; waiting for user interaction.", err);
@@ -233,26 +237,20 @@
             });
         };
 
-        // Cleanup function to remove event listeners
         const cleanup = () => {
             document.removeEventListener('click', playSound);
             document.removeEventListener('touchstart', playSound);
             document.removeEventListener('keydown', playSound);
         };
 
-        // Attach listeners for first user interaction
         document.addEventListener('click', playSound, { once: true });
         document.addEventListener('touchstart', playSound, { once: true });
         document.addEventListener('keydown', playSound, { once: true });
 
-        // Show message if autoplay is blocked (after a short delay)
         setTimeout(() => {
             if (!soundPlayed && soundMsg) {
                 soundMsg.style.display = 'block';
-                // Clicking the message manually also triggers playback
-                soundMsg.onclick = () => {
-                    playSound();
-                };
+                soundMsg.onclick = () => { playSound(); };
             }
         }, 1000);
     }
@@ -343,7 +341,8 @@
             mouseStyle,
             startupSoundEnabled,
             windowSnap,
-            iconTextShadow
+            iconTextShadow,
+            iconLabelTransparency
         };
         localStorage.setItem('win2026_state', JSON.stringify(state));
     }
@@ -378,6 +377,7 @@
             startupSoundEnabled = state.startupSoundEnabled !== undefined ? state.startupSoundEnabled : true;
             windowSnap = state.windowSnap !== undefined ? state.windowSnap : true;
             iconTextShadow = state.iconTextShadow !== undefined ? state.iconTextShadow : true;
+            iconLabelTransparency = state.iconLabelTransparency !== undefined ? state.iconLabelTransparency : 0.3;
             downloadedGames = (state.downloadedGames || []).map(g => {
                 if (g.id === 'pinterest') {
                     return {
@@ -407,6 +407,10 @@
             } else {
                 span.style.textShadow = 'none';
             }
+        });
+        // Update icon label backgrounds
+        document.querySelectorAll('.desktop-icon').forEach(icon => {
+            icon.style.background = `rgba(0,0,0,${iconLabelTransparency})`;
         });
     }
 
@@ -443,7 +447,7 @@
         { id: "recycleBin", name: "Recycle Bin", icon: "🗑️", desktop: false }
     ];
     let deletedApps = [], deletedDownloadedGames = [], openWindows = new Map(), desktopBgColor = "#1b4d2e", wallpaperUrl = null, wallpaperDataURL = null, taskbarAutoHide = false, iconSize = 80, iconSpacing = 100, taskbarHeight = 48, fontSize = 13, borderRadius = 12, animations = true, accentColor = "#2c5a3e", taskbarTransparency = 0.92, showHiddenFiles = false;
-    let doubleClickSpeed = 500, windowOpacity = 1, mouseStyle = "default", windowSnap = true, iconTextShadow = true;
+    let doubleClickSpeed = 500, windowOpacity = 1, mouseStyle = "default", windowSnap = true, iconTextShadow = true, iconLabelTransparency = 0.3;
     let isBsodActive = false, system32Deleted = false;
     let customFolders = [], desktopFiles = [], appPositions = {}, downloadedGames = [];
     let officeProjects = [];
@@ -500,11 +504,11 @@
     function getNextFreePosition() { let taken = []; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) { let p = appPositions[a.id]; if(p) taken.push(`${p.x},${p.y}`); } for(let f of customFolders) taken.push(`${f.x},${f.y}`); for(let f of desktopFiles) taken.push(`${f.x},${f.y}`); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) { let p = appPositions[`game_${g.id}`]; if(p) taken.push(`${p.x},${p.y}`); } for(let i=0;i<100;i++){ let x=20+(i%5)*iconSpacing, y=20+Math.floor(i/5)*iconSpacing; if(!taken.includes(`${x},${y}`)) return {x,y}; } return {x:20,y:20}; }
     function autoArrangeIcons() { let idx=0; let items = []; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) items.push({type:'app',id:a.id}); for(let f of customFolders) items.push({type:'folder',id:f.id}); for(let f of desktopFiles) items.push({type:'file',id:f.id}); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) items.push({type:'game',id:g.id}); for(let it of items) { let x=20+(idx%5)*iconSpacing, y=20+Math.floor(idx/5)*iconSpacing; if(it.type==='app') appPositions[it.id]={x,y}; else if(it.type==='folder') { let f=customFolders.find(f=>f.id==it.id); if(f) { f.x=x; f.y=y; } } else if(it.type==='file') { let f=desktopFiles.find(f=>f.id==it.id); if(f) { f.x=x; f.y=y; } } else if(it.type==='game') appPositions[`game_${it.id}`]={x,y}; idx++; } renderDesktopIcons(); }
     function renderDesktopIcons() { desktopIconsContainer.innerHTML = ''; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) { let p=appPositions[a.id]||getNextFreePosition(); appPositions[a.id]=p; desktopIconsContainer.appendChild(createIcon('app',a.id,a.icon,a.name,p.x,p.y)); } for(let f of customFolders) desktopIconsContainer.appendChild(createIcon('folder',f.id,'📁',f.name,f.x,f.y)); for(let f of desktopFiles) desktopIconsContainer.appendChild(createIcon('file',f.id,'📄',f.name,f.x,f.y)); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) { let p=appPositions[`game_${g.id}`]||getNextFreePosition(); appPositions[`game_${g.id}`]=p; desktopIconsContainer.appendChild(createIcon('game',g.id,g.icon,g.name,p.x,p.y)); } let rp=appPositions['recycleBin']||{x:20,y:400}; appPositions['recycleBin']=rp; let rec=createIcon('app','recycleBin','🗑️','Recycle Bin',rp.x,rp.y); rec.addEventListener('dragover',e=>e.preventDefault()); rec.addEventListener('drop',handleDropOnRecycleBin); desktopIconsContainer.appendChild(rec); applyDesktopSettings(); saveState(); }
-    function createIcon(type,id,iconChar,label,left,top) { let d=document.createElement('div'); d.className='desktop-icon'; d.setAttribute('data-type',type); d.setAttribute('data-id',id); d.style.left=left+'px'; d.style.top=top+'px'; d.style.width=iconSize+'px'; d.innerHTML=`<div style="font-size:42px;">${iconChar}</div><span style="font-size:${fontSize}px">${label}</span>`; d.addEventListener('mousedown',startDrag); if(type==='app') d.addEventListener('dblclick',()=>launchApp(id)); else if(type==='folder') d.addEventListener('dblclick',()=>openFolder(id)); else if(type==='file') d.addEventListener('dblclick',()=>openFile(id)); else if(type==='game') d.addEventListener('dblclick',()=>{ let g=downloadedGames.find(g=>g.id==id); if(g&&g.launch) g.launch(); }); return d; }
+    function createIcon(type,id,iconChar,label,left,top) { let d=document.createElement('div'); d.className='desktop-icon'; d.setAttribute('data-type',type); d.setAttribute('data-id',id); d.style.left=left+'px'; d.style.top=top+'px'; d.style.width=iconSize+'px'; d.style.background = `rgba(0,0,0,${iconLabelTransparency})`; d.innerHTML=`<div style="font-size:42px;">${iconChar}</div><span style="font-size:${fontSize}px">${label}</span>`; d.addEventListener('mousedown',startDrag); if(type==='app') d.addEventListener('dblclick',()=>launchApp(id)); else if(type==='folder') d.addEventListener('dblclick',()=>openFolder(id)); else if(type==='file') d.addEventListener('dblclick',()=>openFile(id)); else if(type==='game') d.addEventListener('dblclick',()=>{ let g=downloadedGames.find(g=>g.id==id); if(g&&g.launch) g.launch(); }); return d; }
     function startDrag(e) { let ic=e.target.closest('.desktop-icon'); if(!ic) return; e.preventDefault(); dragTarget=ic; let r=ic.getBoundingClientRect(); dragOffsetX=e.clientX-r.left; dragOffsetY=e.clientY-r.top; dragStartX=e.clientX; dragStartY=e.clientY; isDraggingForMove=false; ic.classList.add('dragging'); document.addEventListener('mousemove',onDragMove); document.addEventListener('mouseup',stopDrag); }
     function onDragMove(e) { if(!dragTarget) return; let dx=Math.abs(e.clientX-dragStartX), dy=Math.abs(e.clientY-dragStartY); if(!isDraggingForMove && (dx>5||dy>5)) isDraggingForMove=true; if(isDraggingForMove) { let l=e.clientX-dragOffsetX, t=e.clientY-dragOffsetY; l=Math.min(Math.max(l,0),window.innerWidth-dragTarget.offsetWidth); t=Math.min(Math.max(t,0),window.innerHeight-70); dragTarget.style.left=l+'px'; dragTarget.style.top=t+'px'; } }
     function stopDrag(e) { if(!dragTarget) return; dragTarget.classList.remove('dragging'); let type=dragTarget.getAttribute('data-type'), id=dragTarget.getAttribute('data-id'); let under=document.elementsFromPoint(e.clientX,e.clientY)[0]; let recycle=under.closest('.desktop-icon[data-id="recycleBin"]'); if(recycle && (type==='app'||type==='file'||type==='game')) { if(type==='app' && !deletedApps.includes(id)) { deletedApps.push(id); } else if(type==='file') { desktopFiles=desktopFiles.filter(f=>f.id!=id); } else if(type==='game') { uninstallGame(id); } renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); dragTarget=null; document.removeEventListener('mousemove',onDragMove); document.removeEventListener('mouseup',stopDrag); saveState(); return; } if(isDraggingForMove) { let l=parseFloat(dragTarget.style.left), t=parseFloat(dragTarget.style.top); if(type==='app') appPositions[id]={x:l,y:t}; else if(type==='folder') { let f=customFolders.find(f=>f.id==id); if(f) { f.x=l; f.y=t; } } else if(type==='file') { let f=desktopFiles.find(f=>f.id==id); if(f) { f.x=l; f.y=t; } } else if(type==='game') appPositions[`game_${id}`]={x:l,y:t}; saveState(); } dragTarget=null; document.removeEventListener('mousemove',onDragMove); document.removeEventListener('mouseup',stopDrag); }
-    function applyDesktopSettings() { document.querySelectorAll('.desktop-icon').forEach(ic=>{ ic.style.width=iconSize+'px'; ic.querySelector('span').style.fontSize=fontSize+'px'; }); if(!wallpaperUrl && !wallpaperDataURL) desktopDiv.style.backgroundColor=desktopBgColor; if(taskbarAutoHide) taskbar.classList.add('auto-hide'); else taskbar.classList.remove('auto-hide'); taskbar.style.height=taskbarHeight+'px'; document.querySelectorAll('.app-window').forEach(w=>{ w.style.borderRadius=borderRadius+'px'; let h=w.querySelector('.window-header'); if(h) h.style.borderRadius=`${borderRadius}px ${borderRadius}px 0 0`; w.style.opacity = windowOpacity; }); applyAccentAndTaskbar(); saveState(); }
+    function applyDesktopSettings() { document.querySelectorAll('.desktop-icon').forEach(ic=>{ ic.style.width=iconSize+'px'; ic.querySelector('span').style.fontSize=fontSize+'px'; ic.style.background = `rgba(0,0,0,${iconLabelTransparency})`; }); if(!wallpaperUrl && !wallpaperDataURL) desktopDiv.style.backgroundColor=desktopBgColor; if(taskbarAutoHide) taskbar.classList.add('auto-hide'); else taskbar.classList.remove('auto-hide'); taskbar.style.height=taskbarHeight+'px'; document.querySelectorAll('.app-window').forEach(w=>{ w.style.borderRadius=borderRadius+'px'; let h=w.querySelector('.window-header'); if(h) h.style.borderRadius=`${borderRadius}px ${borderRadius}px 0 0`; w.style.opacity = windowOpacity; }); applyAccentAndTaskbar(); saveState(); }
     function openFolder(id) { let f=customFolders.find(f=>f.id==id); if(!f) return; if(openWindows.has(`folder_${id}`)) { openWindows.get(`folder_${id}`).windowElement.style.display='flex'; return; } let html='<div>'; if(f.contents?.length) f.contents.forEach(aid=>{ let a=APP_LIST.find(a=>a.id==aid); if(a) html+=`<div>${a.icon} ${a.name} <button data-restore="${aid}">Restore</button></div>`; }); else html+='<p>Empty. Drag apps here.</p>'; html+='</div>'; let win=createWindow(`📁 ${f.name}`,html,`folder_${id}`); document.body.appendChild(win); win.querySelectorAll('[data-restore]').forEach(btn=>{ btn.onclick=()=>{ let aid=btn.getAttribute('data-restore'); f.contents=f.contents.filter(x=>x!=aid); if(!appPositions[aid]) appPositions[aid]=getNextFreePosition(); renderDesktopIcons(); openFolder(id); saveState(); }; }); }
     function openFile(id) { let f=desktopFiles.find(f=>f.id==id); if(!f) return; let win=createWindow(f.name,`<pre>${escapeHtml(f.content)}</pre><button id="delFile">Delete</button>`, `file_${id}`); document.body.appendChild(win); win.querySelector('#delFile').onclick=()=>{ desktopFiles=desktopFiles.filter(x=>x.id!=id); win.remove(); renderDesktopIcons(); saveState(); }; }
     function createNewFolder() { let id=Date.now()+Math.random(); let name="New Folder"; let c=1; while(customFolders.some(f=>f.name===name)) name=`New Folder (${c++})`; let p=getNextFreePosition(); customFolders.push({id,name,x:p.x,y:p.y,contents:[]}); renderDesktopIcons(); saveState(); }
@@ -895,7 +899,7 @@
         }
     }
 
-    // --- ENHANCED SETTINGS with Installed Apps section ---
+    // --- ENHANCED SETTINGS with Installed Apps section and Label Transparency ---
     function openSettings() {
         const wallpapers = [
             { name: "Classic Green", type: "color", value: "#1b4d2e" },
@@ -972,6 +976,7 @@
                 <label>Animations: <input type="checkbox" id="anim" ${animations?'checked':''}></label><br>
                 <label>Window Snap (drag to edges): <input type="checkbox" id="snap" ${windowSnap?'checked':''}></label><br>
                 <label>Desktop Icon Text Shadow: <input type="checkbox" id="textShadow" ${iconTextShadow?'checked':''}></label><br>
+                <label>Behind App Label Transparency: <input type="range" id="labelTrans" min="0" max="1" step="0.01" value="${iconLabelTransparency}"></label><br>
                 <label>Accent Color: <input type="color" id="accent" value="${accentColor}"></label><br>
                 <label>Taskbar Transparency: <input type="range" id="tran" min="0.5" max="1" step="0.01" value="${taskbarTransparency}"></label><br>
                 <label>Mouse Pointer Style:</label><select id="mouse">${styleOptions}</select><br>
@@ -1083,6 +1088,7 @@
             doubleClickSpeed = parseInt(win.querySelector('#dbl').value);
             mouseStyle = win.querySelector('#mouse').value;
             startupSoundEnabled = win.querySelector('#startupSound').checked;
+            iconLabelTransparency = parseFloat(win.querySelector('#labelTrans').value);
             let theme = win.querySelector('#thm').value;
             desktopBgColor = theme === 'green' ? '#1b4d2e' : (theme === 'blue' ? '#1e3a5f' : '#0a0f1a');
             if (!wallpaperUrl && !wallpaperDataURL) desktopDiv.style.backgroundColor = desktopBgColor;
@@ -1137,6 +1143,53 @@
     desktopDiv.addEventListener('contextmenu', (e) => { e.preventDefault(); showContextMenu(e.clientX, e.clientY, e.target.closest('.desktop-icon')); });
     taskbar.addEventListener('contextmenu', (e) => { e.preventDefault(); let menu = document.createElement('div'); menu.className = 'context-menu'; menu.style.left = e.clientX + 'px'; menu.style.top = e.clientY + 'px'; menu.innerHTML = `<div id="taskbarSettings">⚙️ Taskbar settings</div><div id="taskbarAutoHide">🔄 Auto-hide taskbar</div>`; document.body.appendChild(menu); let close = () => { menu.remove(); document.removeEventListener('click', close); }; document.addEventListener('click', close); document.getElementById('taskbarSettings').onclick = () => { openSettings(); menu.remove(); }; document.getElementById('taskbarAutoHide').onclick = () => { taskbarAutoHide = !taskbarAutoHide; applyDesktopSettings(); menu.remove(); }; });
 
+    // ==================== NEW: WELCOME APP & BOOT WELCOME WINDOW ====================
+    function openWelcomeApp() {
+        const images = [
+            "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Screenshot%202026-04-12%20190831.png",
+            "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Screenshot%202026-04-12%20190951.png",
+            "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Screenshot%202026-04-12%20191453.png"
+        ];
+        const galleryHtml = `
+            <div class="welcome-gallery">
+                <h2 style="text-align:center;">Welcome to Windows Server 2026</h2>
+                ${images.map(url => `<img src="${url}" alt="Screenshot" style="max-width:100%;">`).join('')}
+                <p style="text-align:center; margin-top:20px;">Created by KrisXxXLL</p>
+            </div>
+        `;
+        const win = createWindow("Welcome to Windows Server 2026", galleryHtml, "welcomeApp");
+        document.body.appendChild(win);
+    }
+
+    function showBootWelcomeWindow() {
+        const welcomeHtml = `
+            <div class="boot-welcome-content">
+                <h2>🎉 Welcome to Windows Server 2026</h2>
+                <p>Your secure server environment is ready.</p>
+                <p>Enjoy the experience!</p>
+                <button id="closeBootWelcome">Close</button>
+            </div>
+        `;
+        const win = createWindow("Welcome", welcomeHtml, "bootWelcome");
+        win.classList.add('boot-welcome-window');
+        win.style.left = (window.innerWidth/2 - 200) + 'px';
+        win.style.top = (window.innerHeight/2 - 150) + 'px';
+        win.style.width = '400px';
+        win.style.height = 'auto';
+        win.style.minHeight = 'unset';
+        document.body.appendChild(win);
+        win.querySelector('#closeBootWelcome').onclick = () => {
+            win.remove();
+            for (let [id, info] of openWindows.entries()) {
+                if (info.windowElement === win) {
+                    openWindows.delete(id);
+                    updateTaskbarButtons();
+                    break;
+                }
+            }
+        };
+    }
+
     // --- EVENT BINDINGS & PERSISTENCE ---
     startBtn.addEventListener('click',e=>{ e.stopPropagation(); startMenu.classList.toggle('show'); });
     document.addEventListener('click',e=>{ if(!startMenu.contains(e.target) && e.target!==startBtn) startMenu.classList.remove('show'); });
@@ -1151,6 +1204,7 @@
     document.getElementById('shutdownBtn').addEventListener('click',()=>{ shutdown(); startMenu.classList.remove('show'); });
     document.getElementById('restartBtn').addEventListener('click',()=>{ restart(); startMenu.classList.remove('show'); });
     document.getElementById('aiChatBtn').addEventListener('click', () => { window.open('https://chat.deepseek.com/', '_blank'); startMenu.classList.remove('show'); });
+    document.getElementById('welcomeBtn').addEventListener('click', () => { openWelcomeApp(); startMenu.classList.remove('show'); });
     
     function showRunDialog() { let cmd=prompt("Run command:\nopen [app], delete [app], restart pc, shutdown pc, 666"); if(!cmd) return; let c=cmd.trim().toLowerCase(); if(c.startsWith('open ')) { let an=c.substring(5); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an]) launchApp(map[an]); } else if(c.startsWith('delete ')) { let an=c.substring(7); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an] && !deletedApps.includes(map[an])) { deletedApps.push(map[an]); renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); saveState(); } } else if(c==='restart pc') restart(); else if(c==='shutdown pc') shutdown(); else if(c==='666') trigger666Chaos(); else alert("Invalid"); }
     function shutdown() { bootScreen.style.display='flex'; desktopDiv.style.display='none'; alert("Shutdown."); }
@@ -1172,7 +1226,8 @@
             renderDesktopIcons(); 
             if(!hasSaved) autoArrangeIcons(); 
             saveState(); 
-            initBootSound(); // <-- Fixed boot sound initialization
+            initBootSound();
+            showBootWelcomeWindow(); // Show welcome window after boot
         },600); 
     },2600);
     window.addEventListener('beforeunload', () => { saveState(); });
