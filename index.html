@@ -54,23 +54,12 @@
         .ms-cell { width: 30px; height: 30px; background: #bbb; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; border: 1px solid #888; }
         .ms-cell.revealed { background: #eee; }
         .ms-cell.mine { background: #f66; }
-        .card { width: 60px; height: 80px; background: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 18px; }
-        .chess-square { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 32px; cursor: pointer; }
-        .chess-square.light { background: #f0d9b5; }
-        .chess-square.dark { background: #b58863; }
-        .chess-square.selected { background: #7b9c6e; }
-        .freecell-pile { width: 60px; height: 80px; background: #e0dbc8; border: 1px solid #888; display: flex; align-items: center; justify-content: center; margin: 2px; }
-        .cmd-output { background: #0c0c0c; color: #0f0; font-family: monospace; padding: 10px; height: 300px; overflow-y: auto; font-size: 13px; }
-        .cmd-input-line { display: flex; background: #0c0c0c; padding: 5px 10px; border-top: 1px solid #333; }
-        .cmd-prompt { color: #0f0; margin-right: 8px; }
-        .cmd-input { background: #0c0c0c; border: none; color: #0f0; flex: 1; outline: none; font-family: monospace; }
         .paint-toolbar, .office-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; align-items: center; }
         .office-project-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
         .office-project-item { background: #e0dbc8; padding: 10px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; }
         .office-project-item:hover { background: #d0cbb8; }
         .office-editor textarea { width: 100%; height: 120px; margin-bottom: 10px; }
         .office-drawing { border: 1px solid #aaa; background: white; cursor: crosshair; }
-        .office-image-preview { max-width: 100%; max-height: 150px; margin-top: 10px; }
         .wallpaper-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
         .wallpaper-preview { width: 80px; height: 60px; background-size: cover; background-position: center; border: 2px solid #aaa; border-radius: 6px; cursor: pointer; transition: 0.1s; }
         .wallpaper-preview:hover { transform: scale(1.05); border-color: white; }
@@ -85,16 +74,12 @@
         .calendar .today { background: #ffaa66; }
         .reset-warning { color: #ff6666; font-weight: bold; margin-top: 15px; border-top: 1px solid #aaa; padding-top: 10px; }
         .account-locked { background: #f0f0e0; text-align: center; padding: 40px; color: #666; }
-        .installed-app { display: flex; align-items: center; justify-content: space-between; background: #e0dbc8; margin: 5px 0; padding: 8px; border-radius: 6px; }
-        .installed-app span { font-size: 14px; }
-        .uninstall-btn { background: #aa3333; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
-        .uninstall-btn:hover { background: #cc4444; }
+        .installed-app { display: flex; align-items: center; justify-content: space-between; background: #e0dbc8; margin: 5px 0; padding: 8px; border-radius: 6px; gap: 8px; flex-wrap: wrap; }
+        .installed-app button { background: #2c5a3e; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+        .installed-app button.uninstall { background: #aa3333; }
         .pinterest-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; padding: 10px; max-height: 350px; overflow-y: auto; }
         .pinterest-img { width: 100%; height: 140px; object-fit: cover; border-radius: 8px; cursor: pointer; transition: transform 0.1s; border: 2px solid #ccc; }
         .pinterest-img:hover { transform: scale(1.02); border-color: #2c5a3e; }
-        .search-bar { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
-        .search-bar input { flex: 1; padding: 6px; border-radius: 4px; border: 1px solid #aaa; }
-        .search-bar button { padding: 6px 12px; background: #2c5a3e; color: white; border: none; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -218,15 +203,29 @@
         alert("Logged out. Microsoft Office and Store are now locked.");
     }
 
-    // --- BOOT SOUND ---
+    // --- BOOT SOUND (plays on first user click) ---
     let bootAudio = null;
     let startupSoundEnabled = true;
+    let soundPlayed = false;
     function playBootSound() {
         if (!startupSoundEnabled) return;
+        if (soundPlayed) return;
         if (bootAudio) {
-            bootAudio.play().catch(e => console.log("Autoplay blocked:", e));
+            bootAudio.play().then(() => {
+                soundPlayed = true;
+                const soundMsg = document.getElementById('bootSoundMsg');
+                if (soundMsg) soundMsg.style.display = 'none';
+            }).catch(e => console.log("Autoplay blocked, will play on first click"));
         }
     }
+    // Attach one-time click listener to document to play sound on first user interaction
+    document.addEventListener('click', function onFirstClick() {
+        if (!soundPlayed && startupSoundEnabled && bootAudio) {
+            playBootSound();
+        }
+        // Remove listener after first click to avoid repeated attempts
+        document.removeEventListener('click', onFirstClick);
+    });
 
     // --- MICROSOFT ACCOUNT UI (Start menu) with Logout button ---
     function openMicrosoftAccountUI() {
@@ -286,7 +285,7 @@
         }
     }
 
-    // --- CORE VARIABLES (keep existing) ---
+    // --- CORE VARIABLES ---
     function saveState() {
         const state = {
             deletedApps,
@@ -401,7 +400,7 @@
     const originalRestoreAllApps = restoreAllApps;
     window.restoreAllApps = function() { originalRestoreAllApps(); saveState(); };
 
-    // --- APP LISTS (unchanged) ---
+    // --- APP LISTS ---
     const APP_LIST = [
         { id: "paint", name: "Paint", icon: "🎨", desktop: true },
         { id: "myPC", name: "My PC", icon: "💻", desktop: true },
@@ -425,7 +424,7 @@
     const startBtn = document.getElementById('startBtn'), clockSpan = document.getElementById('clock'), taskbar = document.getElementById('taskbar');
     const taskbarItemsDiv = document.getElementById('taskbarItems'), internetStatusDiv = document.getElementById('internetStatus');
 
-    // --- WALLPAPER & ACCENT (same as before) ---
+    // --- WALLPAPER & ACCENT ---
     function applyWallpaper() {
         if (wallpaperUrl) {
             desktopDiv.style.backgroundImage = `url(${wallpaperUrl})`;
@@ -455,7 +454,7 @@
         return `rgb(${R}, ${G}, ${B})`;
     }
 
-    // --- INTERNET & CLOCK (unchanged) ---
+    // --- INTERNET & CLOCK ---
     function updateInternetStatus() { let ping = Math.floor(Math.random() * 112) + 8; let q = ping<=20?"Excellent":ping<=50?"Good":ping<=80?"Fair":"Slow"; internetStatusDiv.innerHTML = `${ping<=80?"📶":"📡"} ${q}`; }
     setInterval(updateInternetStatus, 3000); updateInternetStatus();
     function updateClock() { let d = new Date(); clockSpan.innerText = d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + " - " + d.toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}); }
@@ -467,7 +466,7 @@
     function makeDraggable(h,w) { let ox,oy,drag=false; h.addEventListener('mousedown',(e)=>{ if(e.target.closest('.window-controls')) return; drag=true; ox=e.clientX-w.offsetLeft; oy=e.clientY-w.offsetTop; w.style.zIndex=Date.now(); document.addEventListener('mousemove',move); document.addEventListener('mouseup',up); e.preventDefault(); }); function move(e){ if(!drag) return; let l=e.clientX-ox, t=e.clientY-oy; l=Math.min(Math.max(l,0),window.innerWidth-w.offsetWidth); t=Math.min(Math.max(t,0),window.innerHeight-70); w.style.left=l+'px'; w.style.top=t+'px'; } function up(){ drag=false; document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); } }
     function createWindow(title, html, appId) { let w = document.createElement('div'); w.className='app-window'; w.style.left='100px'; w.style.top='80px'; w.style.zIndex=Date.now(); if(!animations) w.style.transition='none'; w.style.borderRadius=borderRadius+'px'; w.style.opacity = windowOpacity; w.innerHTML=`<div class="window-header" style="border-radius:${borderRadius}px ${borderRadius}px 0 0"><span>${title}</span><div class="window-controls"><span class="minimize">─</span><span class="close-win">✕</span></div></div><div class="window-content">${html}</div>`; makeDraggable(w.querySelector('.window-header'),w); let icon = {paint:'🎨',myPC:'💻',ie:'🌐',notepad:'📝',games:'🎮',store:'🛒',office:'📊',cmd:'>_',recycleBin:'🗑️'}[appId] || '📄'; registerWindow(appId, w, title, icon); return w; }
 
-    // --- DESKTOP ICONS & POSITIONING (keep as before, but with auto-save) ---
+    // --- DESKTOP ICONS & POSITIONING ---
     function getNextFreePosition() { let taken = []; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) { let p = appPositions[a.id]; if(p) taken.push(`${p.x},${p.y}`); } for(let f of customFolders) taken.push(`${f.x},${f.y}`); for(let f of desktopFiles) taken.push(`${f.x},${f.y}`); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) { let p = appPositions[`game_${g.id}`]; if(p) taken.push(`${p.x},${p.y}`); } for(let i=0;i<100;i++){ let x=20+(i%5)*iconSpacing, y=20+Math.floor(i/5)*iconSpacing; if(!taken.includes(`${x},${y}`)) return {x,y}; } return {x:20,y:20}; }
     function autoArrangeIcons() { let idx=0; let items = []; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) items.push({type:'app',id:a.id}); for(let f of customFolders) items.push({type:'folder',id:f.id}); for(let f of desktopFiles) items.push({type:'file',id:f.id}); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) items.push({type:'game',id:g.id}); for(let it of items) { let x=20+(idx%5)*iconSpacing, y=20+Math.floor(idx/5)*iconSpacing; if(it.type==='app') appPositions[it.id]={x,y}; else if(it.type==='folder') { let f=customFolders.find(f=>f.id==it.id); if(f) { f.x=x; f.y=y; } } else if(it.type==='file') { let f=desktopFiles.find(f=>f.id==it.id); if(f) { f.x=x; f.y=y; } } else if(it.type==='game') appPositions[`game_${it.id}`]={x,y}; idx++; } renderDesktopIcons(); }
     function renderDesktopIcons() { desktopIconsContainer.innerHTML = ''; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) { let p=appPositions[a.id]||getNextFreePosition(); appPositions[a.id]=p; desktopIconsContainer.appendChild(createIcon('app',a.id,a.icon,a.name,p.x,p.y)); } for(let f of customFolders) desktopIconsContainer.appendChild(createIcon('folder',f.id,'📁',f.name,f.x,f.y)); for(let f of desktopFiles) desktopIconsContainer.appendChild(createIcon('file',f.id,'📄',f.name,f.x,f.y)); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) { let p=appPositions[`game_${g.id}`]||getNextFreePosition(); appPositions[`game_${g.id}`]=p; desktopIconsContainer.appendChild(createIcon('game',g.id,g.icon,g.name,p.x,p.y)); } let rp=appPositions['recycleBin']||{x:20,y:400}; appPositions['recycleBin']=rp; let rec=createIcon('app','recycleBin','🗑️','Recycle Bin',rp.x,rp.y); rec.addEventListener('dragover',e=>e.preventDefault()); rec.addEventListener('drop',handleDropOnRecycleBin); desktopIconsContainer.appendChild(rec); applyDesktopSettings(); saveState(); }
@@ -501,7 +500,6 @@
                 launch:()=>{ openPinterestApp(); }
             };
             downloadedGames.push(newGame);
-            // Remove from deletedDownloadedGames so it appears again
             const idx = deletedDownloadedGames.indexOf(def.id);
             if (idx !== -1) deletedDownloadedGames.splice(idx, 1);
             downloadingNow=false;
@@ -531,20 +529,15 @@
         canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; 
         ctx.fillStyle = 'white'; ctx.fillRect(0,0,canvas.width,canvas.height); 
         let painting = false, tool = 'brush', color = '#000000', size = 4, startX, startY;
-        let textMode = false, textX, textY, textFontSize = 20;
+        let textFontSize = 20;
         let t = win.querySelector('#ptool'), c = win.querySelector('#pcolor'), s = win.querySelector('#psize'), clr = win.querySelector('#pclear');
         let saveBtn = win.querySelector('#savePaint');
         let textSizeInput = win.querySelector('#textSize');
         c.oninput = e => color = e.target.value;
         s.oninput = e => size = parseInt(e.target.value);
         textSizeInput.oninput = e => textFontSize = parseInt(e.target.value);
-        t.onchange = e => { 
-            tool = e.target.value.toLowerCase(); 
-            if (tool === 'text') textMode = true; else textMode = false;
-        };
+        t.onchange = e => tool = e.target.value.toLowerCase();
         clr.onclick = () => { ctx.fillStyle = 'white'; ctx.fillRect(0,0,canvas.width,canvas.height); };
-        
-        // Save canvas as PNG to desktop
         saveBtn.onclick = () => {
             let fileName = prompt("Enter file name (without .png):", "MyDrawing");
             if (!fileName) fileName = "MyDrawing";
@@ -563,7 +556,6 @@
             saveState();
             alert(`Saved as "${fileName}" on desktop!`);
         };
-        
         function drawDot(x,y){ 
             if (tool === 'spray') {
                 for (let i = 0; i < 30; i++) {
@@ -612,7 +604,6 @@
                 ctx.fillText(text, x, y);
             }
         }
-        
         canvas.addEventListener('mousedown', (e) => {
             let rect = canvas.getBoundingClientRect(), sx = canvas.width/rect.width, sy = canvas.height/rect.height;
             let mx = (e.clientX - rect.left)*sx, my = (e.clientY - rect.top)*sy;
@@ -648,7 +639,6 @@
         const win = createWindow('Pictures', galleryHtml, galleryId);
         document.body.appendChild(win);
         const galleryDiv = win.querySelector(`#${galleryId}`);
-        // Use a set of nice Windows-style images (nature, abstract, technology)
         const imageIds = [42, 104, 23, 96, 15, 26, 39, 55, 62, 77, 88, 99, 111, 122, 133, 144, 155, 166, 177, 188];
         imageIds.forEach(id => {
             const imgUrl = `https://picsum.photos/id/${id}/300/200`;
@@ -662,67 +652,44 @@
         });
     }
 
-    // --- PINTEREST APP with search bar (Unsplash Source) ---
+    // --- PINTEREST APP with random images (NO SEARCH BAR) ---
     function openPinterestApp() {
         const win = createWindow("Pinterest - Wallpaper Gallery", `
             <div style="padding:10px;">
                 <h3>📌 Pinterest Wallpapers</h3>
-                <div class="search-bar">
-                    <input type="text" id="pinterestSearch" placeholder="Search images (e.g., mountains, city, nature)" value="nature">
-                    <button id="searchPinterestBtn">Search</button>
-                </div>
                 <div id="pinterestGallery" class="pinterest-gallery"></div>
                 <p style="margin-top:10px; font-size:12px;">Right-click any image → Set as desktop wallpaper</p>
             </div>
         `, "pinterestApp");
         document.body.appendChild(win);
         const galleryDiv = win.querySelector('#pinterestGallery');
-        const searchInput = win.querySelector('#pinterestSearch');
-        const searchBtn = win.querySelector('#searchPinterestBtn');
-        
-        async function loadImages(query) {
-            galleryDiv.innerHTML = '<p>Loading images...</p>';
-            try {
-                const imageUrls = [];
-                for (let i = 0; i < 20; i++) {
-                    imageUrls.push(`https://source.unsplash.com/featured/300x200/?${encodeURIComponent(query)}&${Math.random()}`);
+        const imageIds = Array.from({length: 20}, () => Math.floor(Math.random() * 200) + 1);
+        imageIds.forEach(id => {
+            const imgUrl = `https://picsum.photos/id/${id}/300/200`;
+            const fullUrl = `https://picsum.photos/id/${id}/1920/1080`;
+            const img = document.createElement('img');
+            img.src = imgUrl;
+            img.className = 'pinterest-img';
+            img.title = `Image ${id}`;
+            img.addEventListener('click', (e) => {
+                e.stopPropagation();
+                window.open(fullUrl, '_blank');
+            });
+            img.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if (confirm("Set this image as your desktop wallpaper?")) {
+                    wallpaperUrl = fullUrl;
+                    wallpaperDataURL = null;
+                    applyWallpaper();
+                    saveState();
+                    alert("Wallpaper updated!");
                 }
-                galleryDiv.innerHTML = '';
-                imageUrls.forEach(url => {
-                    const img = document.createElement('img');
-                    img.src = url;
-                    img.className = 'pinterest-img';
-                    img.title = `Search: ${query}`;
-                    img.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        window.open(url.replace('300x200', '1920x1080'), '_blank');
-                    });
-                    img.addEventListener('contextmenu', (e) => {
-                        e.preventDefault();
-                        if (confirm("Set this image as your desktop wallpaper?")) {
-                            wallpaperUrl = url.replace('300x200', '1920x1080');
-                            wallpaperDataURL = null;
-                            applyWallpaper();
-                            saveState();
-                            alert("Wallpaper updated!");
-                        }
-                    });
-                    galleryDiv.appendChild(img);
-                });
-            } catch(e) {
-                galleryDiv.innerHTML = '<p>Error loading images. Try a different search term.</p>';
-            }
-        }
-        
-        searchBtn.onclick = () => {
-            let query = searchInput.value.trim();
-            if (!query) query = "nature";
-            loadImages(query);
-        };
-        loadImages("nature");
+            });
+            galleryDiv.appendChild(img);
+        });
     }
 
-    // --- OTHER APPS (Notepad, IE, CMD, My PC, Calendar, Calculator, Games) ---
+    // --- OTHER APPS (Notepad, IE, CMD, My PC, Calendar, Calculator, Games, Office) ---
     function notepadUI(){ return `<textarea id="nt" style="width:100%; height:300px;"></textarea><button id="saveNote">Save to Desktop</button>`; }
     function initNotepad(win){ win.querySelector('#saveNote').onclick=()=>{ let name=prompt("File name:","Note")+".txt"; if(name){ let pos=getNextFreePosition(); desktopFiles.push({id:Date.now()+Math.random(),name,content:win.querySelector('#nt').value,x:pos.x,y:pos.y,isImage:false}); renderDesktopIcons(); saveState(); alert("Saved!"); } }; }
     function ieUI(){ return `<div><input id="ieSearch" placeholder="Type URL or search term..."><button id="ieGo">Go</button></div><div id="ieRes" style="height:300px; overflow:auto; margin-top:10px; background:#fff; padding:10px;">🌐 Welcome to Internet Explorer<br>Type a website (e.g., https://example.com) or a search term.<br>Special keywords: sprunki, retrocore, youtube, google, 666</div>`; }
@@ -778,14 +745,14 @@
         });
     }
 
-    // --- CALENDAR & CALCULATOR (unchanged) ---
+    // --- CALENDAR & CALCULATOR ---
     function openCalendar() {
         const now = new Date();
         const year = now.getFullYear();
         const month = now.getMonth();
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        let html = `<div style="text-align:center"><h3>📅 ${now.toLocaleString('default', { month: 'long' })} ${year}</h3><table class="calendar"><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>对待</td>`;
+        let html = `<div style="text-align:center"><h3>📅 ${now.toLocaleString('default', { month: 'long' })} ${year}</h3><table class="calendar"><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>对待<tr>`;
         let day = 1;
         for (let i = 0; i < 6; i++) {
             for (let j = 0; j < 7; j++) {
@@ -865,7 +832,40 @@
         });
     }
 
-    // --- ENHANCED SETTINGS (same as before, but with Installed Apps list) ---
+    // --- OFFICE UI ---
+    function officeUI() {
+        if (!loggedIn) {
+            return `<div class="account-locked"><h3>🔒 Microsoft Office</h3><p>You need a Microsoft Account to use Office.</p><p>Please go to Start → Microsoft Account and create one.</p></div>`;
+        }
+        let html = `<div><h3>Microsoft Office</h3><div id="officeView"><div class="office-toolbar"><button id="newProjectBtn">➕ New Project</button></div><div id="projectList" class="office-project-list"></div></div></div>`;
+        setTimeout(()=>{ let container = document.getElementById('officeView'); if(!container) return; function renderProjectList() { let listDiv = document.getElementById('projectList'); if(!listDiv) return; if(officeProjects.length===0) { listDiv.innerHTML='<p>No projects. Click "New Project" to create one.</p>'; return; } listDiv.innerHTML = officeProjects.map(p => `<div class="office-project-item" data-id="${p.id}"><span>📄 ${escapeHtml(p.name)}</span><div><button class="editProject">Edit</button> <button class="deleteProject">Delete</button></div></div>`).join(''); listDiv.querySelectorAll('.editProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); openProjectEditor(id); }; }); listDiv.querySelectorAll('.deleteProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); officeProjects=officeProjects.filter(p=>p.id!=id); renderProjectList(); saveState(); }; }); } function openProjectEditor(id) { let project = officeProjects.find(p=>p.id==id); if(!project) return; let win=createWindow(`Office - ${project.name}`, `<div class="office-editor"><input type="text" id="projName" value="${escapeHtml(project.name)}" style="width:100%; margin-bottom:10px;"><h4>Text</h4><textarea id="projText">${escapeHtml(project.textContent||'')}</textarea><h4>Drawing</h4><canvas id="officeCanvas" width="400" height="200" class="office-drawing" style="background:white;"></canvas><div><button id="clearCanvas">Clear Drawing</button></div><h4>Images</h4><input type="file" id="imageUpload" accept="image/*"><div id="imageList"></div><button id="saveProject">Save Project</button></div>`, `office_edit_${id}`); document.body.appendChild(win); let canvas=win.querySelector('#officeCanvas'), ctx=canvas.getContext('2d'); let drawing=false; if(project.drawingDataURL) { let img=new Image(); img.onload=()=>ctx.drawImage(img,0,0,canvas.width,canvas.height); img.src=project.drawingDataURL; } canvas.addEventListener('mousedown',()=>drawing=true); canvas.addEventListener('mouseup',()=>drawing=false); canvas.addEventListener('mousemove',(e)=>{ if(!drawing) return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let x=(e.clientX-rect.left)*sx, y=(e.clientY-rect.top)*sy; ctx.fillStyle='black'; ctx.fillRect(x-2,y-2,4,4); }); win.querySelector('#clearCanvas').onclick=()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); }; let imageList=win.querySelector('#imageList'); function refreshImages() { imageList.innerHTML=project.images?.map((img,idx)=>`<div><img src="${img}" style="max-width:100px; max-height:100px;"> <button data-idx="${idx}">Remove</button></div>`).join('')||''; imageList.querySelectorAll('button').forEach(btn=>{ btn.onclick=()=>{ let idx=parseInt(btn.getAttribute('data-idx')); project.images.splice(idx,1); refreshImages(); saveState(); }; }); } refreshImages(); win.querySelector('#imageUpload').onchange=(e)=>{ let file=e.target.files[0]; if(file){ let reader=new FileReader(); reader.onload=(ev)=>{ if(!project.images) project.images=[]; project.images.push(ev.target.result); refreshImages(); saveState(); }; reader.readAsDataURL(file); } }; win.querySelector('#saveProject').onclick=()=>{ project.name=win.querySelector('#projName').value; project.textContent=win.querySelector('#projText').value; project.drawingDataURL=canvas.toDataURL(); renderProjectList(); win.close(); saveState(); }; } function createNewProject() { let name=prompt("Project name:","My Project"); if(!name) return; let newId=Date.now()+Math.random(); officeProjects.push({ id:newId, name:name, textContent:"", drawingDataURL:null, images:[] }); renderProjectList(); saveState(); } document.getElementById('newProjectBtn').onclick=createNewProject; renderProjectList(); },50); return html;
+    }
+
+    // --- STORE UI ---
+    function storeUI() {
+        if (!loggedIn) {
+            return `<div class="account-locked"><h3>🛒 Microsoft Store</h3><p>You need a Microsoft Account to access the Store.</p><p>Please go to Start → Microsoft Account and create one.</p></div>`;
+        }
+        let html='<h3>Microsoft Store</h3><div id="storeItemsContainer" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">';
+        storeGames.forEach(g=>{ html+=`<div class="store-item" data-game="${g.id}" style="background:#d4cfb8;padding:10px;border-radius:8px;text-align:center;cursor:pointer;">${g.icon} ${g.name}<br><small>Click to install</small></div>`; });
+        html+='</div>';
+        return html;
+    }
+    function initStore(win){
+        const container = win.querySelector('#storeItemsContainer');
+        if (container) {
+            container.addEventListener('click', (e) => {
+                const item = e.target.closest('.store-item');
+                if (item) {
+                    const id = item.getAttribute('data-game');
+                    const def = storeGames.find(g => g.id === id);
+                    if (def) installGame(def);
+                }
+            });
+        }
+    }
+
+    // --- ENHANCED SETTINGS with Installed Apps section ---
     function openSettings() {
         const wallpapers = [
             { name: "Classic Green", type: "color", value: "#1b4d2e" },
@@ -890,11 +890,37 @@
             downloadedGames.forEach(game => {
                 const div = document.createElement('div');
                 div.className = 'installed-app';
-                div.innerHTML = `<span>${game.icon} ${game.name}</span><button class="uninstall-btn" data-id="${game.id}">Uninstall</button>`;
+                div.innerHTML = `
+                    <span>${game.icon} ${game.name}</span>
+                    <div style="display:flex; gap:5px;">
+                        <button class="open-btn" data-id="${game.id}">Open</button>
+                        <button class="show-btn" data-id="${game.id}">Show on Desktop</button>
+                        <button class="uninstall-btn" data-id="${game.id}">Uninstall</button>
+                    </div>
+                `;
                 container.appendChild(div);
             });
+            container.querySelectorAll('.open-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-id');
+                    const game = downloadedGames.find(g => g.id === id);
+                    if (game && game.launch) game.launch();
+                });
+            });
+            container.querySelectorAll('.show-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-id');
+                    const idx = deletedDownloadedGames.indexOf(id);
+                    if (idx !== -1) deletedDownloadedGames.splice(idx, 1);
+                    if (!appPositions[`game_${id}`]) {
+                        appPositions[`game_${id}`] = getNextFreePosition();
+                    }
+                    renderDesktopIcons();
+                    alert(`${downloadedGames.find(g=>g.id===id)?.name} icon added to desktop.`);
+                });
+            });
             container.querySelectorAll('.uninstall-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', () => {
                     const id = btn.getAttribute('data-id');
                     if (confirm(`Uninstall ${downloadedGames.find(g=>g.id===id)?.name}?`)) {
                         uninstallGame(id);
@@ -1039,7 +1065,7 @@
         };
     }
 
-    // --- BSOD / SYSTEM32 (unchanged) ---
+    // --- BSOD / SYSTEM32 ---
     let draggedItemType=null;
     function handleFileDragStart(e) { let t=e.target.closest('.file-item'); if(t && t.getAttribute('data-file')==='system32') { draggedItemType='system32'; e.dataTransfer.setData('text/plain','system32'); e.target.style.opacity='0.6'; } else e.preventDefault(); }
     function handleFileDragEnd(e) { if(e.target) e.target.style.opacity=''; draggedItemType=null; }
@@ -1100,39 +1126,6 @@
     function shutdown() { bootScreen.style.display='flex'; desktopDiv.style.display='none'; alert("Shutdown."); }
     function restart() { bootScreen.style.display='flex'; desktopDiv.style.display='none'; setTimeout(()=>location.reload(),800); }
     function launchApp(id) { if(openWindows.has(id)) { openWindows.get(id).windowElement.style.display='flex'; return; } if(id==='recycleBin'){ if(openWindows.has('recycleBin')) openWindows.get('recycleBin').windowElement.style.display='flex'; else { let win=createWindow('Recycle Bin','<div>Loading...</div>','recycleBin'); document.body.appendChild(win); refreshRecycleBin(); } return; } let def=APP_LIST.find(a=>a.id===id); if(!def) return; let content='', init=null; if(id==='paint') { content=paintUI(); init=initPaint; } else if(id==='myPC') { content=myPCUI(); init=(win)=>{ attachMyPCListeners(win); }; } else if(id==='ie') { content=ieUI(); init=initIE; } else if(id==='notepad') { content=notepadUI(); init=initNotepad; } else if(id==='games') { content=gamesUI(); init=initGames; } else if(id==='store') { content=storeUI(); init=initStore; } else if(id==='office') { content=officeUI(); init=null; } else if(id==='cmd') { content=cmdUI(); init=initCMD; } else return; let win=createWindow(def.name,content,id); document.body.appendChild(win); if(init) init(win); }
-    
-    // Store UI (only Pinterest)
-    function storeUI() {
-        if (!loggedIn) {
-            return `<div class="account-locked"><h3>🛒 Microsoft Store</h3><p>You need a Microsoft Account to access the Store.</p><p>Please go to Start → Microsoft Account and create one.</p></div>`;
-        }
-        let html='<h3>Microsoft Store</h3><div id="storeItemsContainer" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">';
-        storeGames.forEach(g=>{ html+=`<div class="store-item" data-game="${g.id}" style="background:#d4cfb8;padding:10px;border-radius:8px;text-align:center;cursor:pointer;">${g.icon} ${g.name}<br><small>Click to install</small></div>`; });
-        html+='</div>';
-        return html;
-    }
-    function initStore(win){
-        const container = win.querySelector('#storeItemsContainer');
-        if (container) {
-            container.addEventListener('click', (e) => {
-                const item = e.target.closest('.store-item');
-                if (item) {
-                    const id = item.getAttribute('data-game');
-                    const def = storeGames.find(g => g.id === id);
-                    if (def) installGame(def);
-                }
-            });
-        }
-    }
-    
-    // Office UI (unchanged)
-    function officeUI() {
-        if (!loggedIn) {
-            return `<div class="account-locked"><h3>🔒 Microsoft Office</h3><p>You need a Microsoft Account to use Office.</p><p>Please go to Start → Microsoft Account and create one.</p></div>`;
-        }
-        let html = `<div><h3>Microsoft Office</h3><div id="officeView"><div class="office-toolbar"><button id="newProjectBtn">➕ New Project</button></div><div id="projectList" class="office-project-list"></div></div></div>`;
-        setTimeout(()=>{ let container = document.getElementById('officeView'); if(!container) return; function renderProjectList() { let listDiv = document.getElementById('projectList'); if(!listDiv) return; if(officeProjects.length===0) { listDiv.innerHTML='<p>No projects. Click "New Project" to create one.</p>'; return; } listDiv.innerHTML = officeProjects.map(p => `<div class="office-project-item" data-id="${p.id}"><span>📄 ${escapeHtml(p.name)}</span><div><button class="editProject">Edit</button> <button class="deleteProject">Delete</button></div></div>`).join(''); listDiv.querySelectorAll('.editProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); openProjectEditor(id); }; }); listDiv.querySelectorAll('.deleteProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); officeProjects=officeProjects.filter(p=>p.id!=id); renderProjectList(); saveState(); }; }); } function openProjectEditor(id) { let project = officeProjects.find(p=>p.id==id); if(!project) return; let win=createWindow(`Office - ${project.name}`, `<div class="office-editor"><input type="text" id="projName" value="${escapeHtml(project.name)}" style="width:100%; margin-bottom:10px;"><h4>Text</h4><textarea id="projText">${escapeHtml(project.textContent||'')}</textarea><h4>Drawing</h4><canvas id="officeCanvas" width="400" height="200" class="office-drawing" style="background:white;"></canvas><div><button id="clearCanvas">Clear Drawing</button></div><h4>Images</h4><input type="file" id="imageUpload" accept="image/*"><div id="imageList"></div><button id="saveProject">Save Project</button></div>`, `office_edit_${id}`); document.body.appendChild(win); let canvas=win.querySelector('#officeCanvas'), ctx=canvas.getContext('2d'); let drawing=false; if(project.drawingDataURL) { let img=new Image(); img.onload=()=>ctx.drawImage(img,0,0,canvas.width,canvas.height); img.src=project.drawingDataURL; } canvas.addEventListener('mousedown',()=>drawing=true); canvas.addEventListener('mouseup',()=>drawing=false); canvas.addEventListener('mousemove',(e)=>{ if(!drawing) return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let x=(e.clientX-rect.left)*sx, y=(e.clientY-rect.top)*sy; ctx.fillStyle='black'; ctx.fillRect(x-2,y-2,4,4); }); win.querySelector('#clearCanvas').onclick=()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); }; let imageList=win.querySelector('#imageList'); function refreshImages() { imageList.innerHTML=project.images?.map((img,idx)=>`<div><img src="${img}" style="max-width:100px; max-height:100px;"> <button data-idx="${idx}">Remove</button></div>`).join('')||''; imageList.querySelectorAll('button').forEach(btn=>{ btn.onclick=()=>{ let idx=parseInt(btn.getAttribute('data-idx')); project.images.splice(idx,1); refreshImages(); saveState(); }; }); } refreshImages(); win.querySelector('#imageUpload').onchange=(e)=>{ let file=e.target.files[0]; if(file){ let reader=new FileReader(); reader.onload=(ev)=>{ if(!project.images) project.images=[]; project.images.push(ev.target.result); refreshImages(); saveState(); }; reader.readAsDataURL(file); } }; win.querySelector('#saveProject').onclick=()=>{ project.name=win.querySelector('#projName').value; project.textContent=win.querySelector('#projText').value; project.drawingDataURL=canvas.toDataURL(); renderProjectList(); win.close(); saveState(); }; } function createNewProject() { let name=prompt("Project name:","My Project"); if(!name) return; let newId=Date.now()+Math.random(); officeProjects.push({ id:newId, name:name, textContent:"", drawingDataURL:null, images:[] }); renderProjectList(); saveState(); } document.getElementById('newProjectBtn').onclick=createNewProject; renderProjectList(); },50); return html;
-    }
 
     function escapeHtml(s){ return s.replace(/[&<>]/g,m=> m==='&'?'&amp;': m==='<'?'&lt;':'&gt;'); }
     
@@ -1140,11 +1133,10 @@
     loadAccount();
     const hasSaved = loadState();
     
-    // --- BOOT SOUND SETUP ---
+    // --- BOOT SOUND SETUP (plays on first user click) ---
     bootAudio = new Audio("https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/windows-server-2003-uk-startup-sound.mp3");
     bootAudio.load();
     const soundMsg = document.getElementById('bootSoundMsg');
-    let soundPlayed = false;
     
     function attemptPlaySound() {
         if (!startupSoundEnabled) return;
@@ -1152,20 +1144,23 @@
         bootAudio.play().then(() => {
             soundPlayed = true;
             if (soundMsg) soundMsg.style.display = 'none';
-        }).catch(e => {
-            console.log("Autoplay blocked, showing manual play button");
-            if (soundMsg) soundMsg.style.display = 'block';
-        });
+        }).catch(e => console.log("Autoplay blocked, will play on first click"));
     }
     
     if (soundMsg) {
         soundMsg.onclick = () => {
-            bootAudio.play().catch(e => console.log("Manual play failed", e));
-            soundMsg.style.display = 'none';
+            if (!soundPlayed) {
+                bootAudio.play().catch(e => console.log("Manual play failed", e));
+                soundMsg.style.display = 'none';
+            }
         };
     }
     
-    setTimeout(()=>{ bootScreen.style.opacity='0'; setTimeout(()=>{ bootScreen.style.display='none'; desktopDiv.style.display='block'; renderDesktopIcons(); if(!hasSaved) autoArrangeIcons(); saveState(); attemptPlaySound(); },600); },2600);
+    // The global click listener is already set at the top of the script.
+    // We'll also attempt to play after boot (in case user clicks very fast)
+    setTimeout(()=>{ bootScreen.style.opacity='0'; setTimeout(()=>{ bootScreen.style.display='none'; desktopDiv.style.display='block'; renderDesktopIcons(); if(!hasSaved) autoArrangeIcons(); saveState(); // Try to play sound automatically (but browser may block)
+        attemptPlaySound();
+    },600); },2600);
     window.addEventListener('beforeunload', () => { saveState(); });
 </script>
 </body>
