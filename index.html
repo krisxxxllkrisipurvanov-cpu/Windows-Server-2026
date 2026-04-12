@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Windows Server 2026 | KrisXxXLL</title>
+    <!-- Site icon (favicon) -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/window.png">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; height: 100vh; width: 100vw; background: #0c0e14; }
@@ -203,29 +205,57 @@
         alert("Logged out. Microsoft Office and Store are now locked.");
     }
 
-    // --- BOOT SOUND (plays on first user click) ---
+    // --- BOOT SOUND (plays on first user interaction) ---
     let bootAudio = null;
     let startupSoundEnabled = true;
     let soundPlayed = false;
-    function playBootSound() {
+
+    function initBootSound() {
         if (!startupSoundEnabled) return;
-        if (soundPlayed) return;
-        if (bootAudio) {
+
+        // Create audio element
+        bootAudio = new Audio("https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/windows-server-2003-uk-startup-sound.mp3");
+        bootAudio.load();
+
+        const soundMsg = document.getElementById('bootSoundMsg');
+
+        // Function to attempt playback
+        const playSound = () => {
+            if (soundPlayed || !bootAudio) return;
             bootAudio.play().then(() => {
                 soundPlayed = true;
-                const soundMsg = document.getElementById('bootSoundMsg');
                 if (soundMsg) soundMsg.style.display = 'none';
-            }).catch(e => console.log("Autoplay blocked, will play on first click"));
-        }
+                // Remove listeners after success
+                cleanup();
+            }).catch(err => {
+                console.warn("Autoplay blocked; waiting for user interaction.", err);
+                if (soundMsg) soundMsg.style.display = 'block';
+            });
+        };
+
+        // Cleanup function to remove event listeners
+        const cleanup = () => {
+            document.removeEventListener('click', playSound);
+            document.removeEventListener('touchstart', playSound);
+            document.removeEventListener('keydown', playSound);
+        };
+
+        // Attach listeners for first user interaction
+        document.addEventListener('click', playSound, { once: true });
+        document.addEventListener('touchstart', playSound, { once: true });
+        document.addEventListener('keydown', playSound, { once: true });
+
+        // Show message if autoplay is blocked (after a short delay)
+        setTimeout(() => {
+            if (!soundPlayed && soundMsg) {
+                soundMsg.style.display = 'block';
+                // Clicking the message manually also triggers playback
+                soundMsg.onclick = () => {
+                    playSound();
+                };
+            }
+        }, 1000);
     }
-    // Attach one-time click listener to document to play sound on first user interaction
-    document.addEventListener('click', function onFirstClick() {
-        if (!soundPlayed && startupSoundEnabled && bootAudio) {
-            playBootSound();
-        }
-        // Remove listener after first click to avoid repeated attempts
-        document.removeEventListener('click', onFirstClick);
-    });
 
     // --- MICROSOFT ACCOUNT UI (Start menu) with Logout button ---
     function openMicrosoftAccountUI() {
@@ -752,7 +782,7 @@
         const month = now.getMonth();
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        let html = `<div style="text-align:center"><h3>📅 ${now.toLocaleString('default', { month: 'long' })} ${year}</h3><table class="calendar"><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>对待<tr>`;
+        let html = `<div style="text-align:center"><h3>📅 ${now.toLocaleString('default', { month: 'long' })} ${year}</h3><table class="calendar"><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>对待</tr>`;
         let day = 1;
         for (let i = 0; i < 6; i++) {
             for (let j = 0; j < 7; j++) {
@@ -769,7 +799,7 @@
             if (day > daysInMonth) break;
             html += `键</tr>`;
         }
-        html += `能</table></div>`;
+        html += `能<tr></div>`;
         const win = createWindow('Calendar', html, 'calendar');
         document.body.appendChild(win);
     }
@@ -1133,34 +1163,18 @@
     loadAccount();
     const hasSaved = loadState();
     
-    // --- BOOT SOUND SETUP (plays on first user click) ---
-    bootAudio = new Audio("https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/windows-server-2003-uk-startup-sound.mp3");
-    bootAudio.load();
-    const soundMsg = document.getElementById('bootSoundMsg');
-    
-    function attemptPlaySound() {
-        if (!startupSoundEnabled) return;
-        if (soundPlayed) return;
-        bootAudio.play().then(() => {
-            soundPlayed = true;
-            if (soundMsg) soundMsg.style.display = 'none';
-        }).catch(e => console.log("Autoplay blocked, will play on first click"));
-    }
-    
-    if (soundMsg) {
-        soundMsg.onclick = () => {
-            if (!soundPlayed) {
-                bootAudio.play().catch(e => console.log("Manual play failed", e));
-                soundMsg.style.display = 'none';
-            }
-        };
-    }
-    
-    // The global click listener is already set at the top of the script.
-    // We'll also attempt to play after boot (in case user clicks very fast)
-    setTimeout(()=>{ bootScreen.style.opacity='0'; setTimeout(()=>{ bootScreen.style.display='none'; desktopDiv.style.display='block'; renderDesktopIcons(); if(!hasSaved) autoArrangeIcons(); saveState(); // Try to play sound automatically (but browser may block)
-        attemptPlaySound();
-    },600); },2600);
+    // --- BOOT SEQUENCE ---
+    setTimeout(()=>{ 
+        bootScreen.style.opacity='0'; 
+        setTimeout(()=>{ 
+            bootScreen.style.display='none'; 
+            desktopDiv.style.display='block'; 
+            renderDesktopIcons(); 
+            if(!hasSaved) autoArrangeIcons(); 
+            saveState(); 
+            initBootSound(); // <-- Fixed boot sound initialization
+        },600); 
+    },2600);
     window.addEventListener('beforeunload', () => { saveState(); });
 </script>
 </body>
