@@ -118,25 +118,25 @@
     <div class="start-menu" id="startMenu">
         <div class="start-header">🌟 Windows Server 2026</div>
         <ul class="start-items">
-            <!-- Updated with matching image icons -->
-            <li data-app="notepad"><span style="font-size:24px;">📝</span> Notepad</li>
+            <!-- Updated with custom image icons -->
+            <li data-app="notepad"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Windows_Notepad_icon.png" style="width:24px;height:24px;"> Notepad</li>
             <li data-app="games"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/9335791.png" style="width:24px;height:24px;"> Games</li>
             <li data-app="store"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Microsoft_Store_Fluent_Design_icon_Windows_11.png" style="width:24px;height:24px;"> Microsoft Store</li>
             <li data-app="office"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/1486565573-microsoft-office_81557.webp" style="width:24px;height:24px;"> Microsoft Office</li>
             <li data-app="cmd"><span style="font-size:24px;">>_</span> Command Prompt</li>
             <li data-app="recycleBin"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Recyle_Bin_empty.webp" style="width:24px;height:24px;"> Recycle Bin</li>
-            <li id="aiChatBtn"><span style="font-size:24px;">🤖</span> AI Chat</li>
-            <li id="calendarBtn"><span style="font-size:24px;">📅</span> Calendar</li>
-            <li id="calculatorBtn"><span style="font-size:24px;">🧮</span> Calculator</li>
-            <li id="msAccountBtn"><span style="font-size:24px;">👤</span> Microsoft Account</li>
+            <li id="aiChatBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/deepseek.png" style="width:24px;height:24px;"> AI Chat</li>
+            <li id="calendarBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Calendar-icon.png" style="width:24px;height:24px;"> Calendar</li>
+            <li id="calculatorBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Windows_Calculator_icon.png" style="width:24px;height:24px;"> Calculator</li>
+            <li id="msAccountBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Microsoft_Account_Logo.svg.png" style="width:24px;height:24px;"> Microsoft Account</li>
             <li id="welcomeBtn"><span style="font-size:24px;">🎉</span> Welcome to Windows Server 2026</li>
             <div class="divider"></div>
             <li id="documentsBtn"><span style="font-size:24px;">📄</span> Documents</li>
-            <li id="picturesBtn"><span style="font-size:24px;">🖼️</span> Pictures</li>
-            <li id="musicBtn"><span style="font-size:24px;">🎵</span> Music</li>
-            <li id="runBtn"><span style="font-size:24px;">▶️</span> Run...</li>
+            <li id="picturesBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/photos-newicon.png" style="width:24px;height:24px;"> Pictures</li>
+            <li id="musicBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/deqmc77-33847091-bb12-4bf3-9621-98ea50575f22.png" style="width:24px;height:24px;"> Music</li>
+            <li id="runBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/deqmb2f-c96c5c1d-07e8-47b6-a49f-6b99f1d28c46.png" style="width:24px;height:24px;"> Run...</li>
             <div class="divider"></div>
-            <li id="settingsBtn"><span style="font-size:24px;">⚙️</span> Settings</li>
+            <li id="settingsBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Settings_Windows_10x11.webp" style="width:24px;height:24px;"> Settings</li>
             <li id="shutdownBtn"><span style="font-size:24px;">⏻</span> Shutdown</li>
             <li id="restartBtn"><span style="font-size:24px;">🔄</span> Restart</li>
         </ul>
@@ -431,12 +431,12 @@
     const originalRestoreAllApps = restoreAllApps;
     window.restoreAllApps = function() { originalRestoreAllApps(); saveState(); };
 
-    // --- APP LIST with all updated icons (using raw URLs) ---
+    // --- APP LIST with updated Notepad icon ---
     const APP_LIST = [
         { id: "paint", name: "Paint", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/MSPaint.webp", desktop: true },
         { id: "myPC", name: "My PC", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/this-pc-computer-display-windows-11-icon.avif", desktop: true },
         { id: "ie", name: "Internet Explorer", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Internet_Explorer_10%2B11_logo.svg.png", desktop: true },
-        { id: "notepad", name: "Notepad", icon: "📝", desktop: true },
+        { id: "notepad", name: "Notepad", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Windows_Notepad_icon.png", desktop: true },
         { id: "games", name: "Games", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/9335791.png", desktop: true },
         { id: "store", name: "Microsoft Store", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Microsoft_Store_Fluent_Design_icon_Windows_11.png", desktop: true },
         { id: "office", name: "Microsoft Office", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/1486565573-microsoft-office_81557.webp", desktop: true },
