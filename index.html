@@ -22,12 +22,14 @@
         .desktop-icon { position: absolute; display: flex; flex-direction: column; align-items: center; width: 80px; cursor: pointer; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 6px 4px; color: white; text-shadow: 0 1px 2px black; transition: left 0.1s, top 0.1s; }
         .desktop-icon.dragging { opacity: 0.5; }
         .desktop-icon span { font-size: 12px; margin-top: 5px; text-align: center; font-weight: 500; word-break: break-word; max-width: 70px; }
+        .desktop-icon img { width: 42px; height: 42px; object-fit: contain; }
         .context-menu { position: fixed; background: #2d2d2d; border: 1px solid #555; border-radius: 6px; box-shadow: 2px 2px 10px rgba(0,0,0,0.5); z-index: 10000; min-width: 160px; }
         .context-menu div { padding: 8px 12px; color: white; cursor: pointer; font-size: 13px; }
         .context-menu div:hover { background: #3a6ea5; }
         .taskbar { position: absolute; bottom: 0; left: 0; width: 100%; height: 48px; background: rgba(30, 40, 50, 0.92); backdrop-filter: blur(12px); border-top: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; padding: 0 10px; z-index: 1000; transition: bottom 0.2s, height 0.2s, background-color 0.2s; gap: 8px; }
         .taskbar.auto-hide { bottom: -48px; }
         .start-button { background: linear-gradient(135deg, #2d6a4f, #1b4332); padding: 6px 18px; border-radius: 20px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .start-button img { width: 20px; height: 20px; }
         .start-button:hover { background: linear-gradient(135deg, #40916c, #2d6a4f); }
         .taskbar-items { display: flex; gap: 6px; flex: 1; overflow-x: auto; height: 36px; align-items: center; }
         .taskbar-app-btn { background: rgba(255,255,255,0.15); border-radius: 6px; padding: 4px 12px; color: white; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; white-space: nowrap; transition: 0.05s; }
@@ -39,6 +41,7 @@
         .start-header { padding: 8px 16px; border-bottom: 1px solid #3a5e6e; color: #eef4ff; font-weight: bold; }
         .start-items { list-style: none; padding: 6px 0; max-height: 400px; overflow-y: auto; }
         .start-items li { padding: 10px 20px; color: white; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+        .start-items li img { width: 24px; height: 24px; object-fit: contain; }
         .start-items li:hover { background: #2e6b4e; }
         .divider { height: 1px; background: #3a5e6e; margin: 8px 0; }
         .app-window { position: absolute; background: #ece9e0; border-radius: 12px 12px 8px 8px; box-shadow: 0 12px 28px rgba(0,0,0,0.5); min-width: 450px; min-height: 400px; width: 550px; height: 500px; z-index: 500; display: flex; flex-direction: column; resize: both; overflow: auto; border: 1px solid #aaa; transition: border-radius 0.2s; }
@@ -89,6 +92,8 @@
         .file-list-item:hover { background: #e0dbc8; }
         .music-item { display: flex; align-items: center; gap: 12px; padding: 8px; border-bottom: 1px solid #ccc; }
         .music-item button { margin-left: auto; background: #2c5a3e; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
+        .win95-btn { background: #c0c0c0; border: 2px outset #fff; padding: 8px 16px; font-weight: bold; cursor: pointer; margin: 5px 0; }
+        .win95-btn:hover { background: #d4d0c8; }
     </style>
 </head>
 <body>
@@ -103,7 +108,9 @@
 <div class="desktop" id="desktop">
     <div class="desktop-icons" id="desktopIconsContainer"></div>
     <div class="taskbar" id="taskbar">
-        <div class="start-button" id="startBtn">📌 Start</div>
+        <div class="start-button" id="startBtn">
+            <img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/window.png" alt="Start"> Start
+        </div>
         <div class="taskbar-items" id="taskbarItems"></div>
         <div class="internet-status" id="internetStatus">📡 Connecting...</div>
         <div class="taskbar-time" id="clock"></div>
@@ -111,26 +118,27 @@
     <div class="start-menu" id="startMenu">
         <div class="start-header">🌟 Windows Server 2026</div>
         <ul class="start-items">
-            <li data-app="notepad">📝 Notepad</li>
-            <li data-app="games">🎮 Games</li>
-            <li data-app="store">🛒 Microsoft Store</li>
-            <li data-app="office">📊 Microsoft Office</li>
-            <li data-app="cmd">💻 Command Prompt</li>
-            <li data-app="recycleBin">🗑️ Recycle Bin</li>
-            <li id="aiChatBtn">🤖 AI Chat</li>
-            <li id="calendarBtn">📅 Calendar</li>
-            <li id="calculatorBtn">🧮 Calculator</li>
-            <li id="msAccountBtn">👤 Microsoft Account</li>
-            <li id="welcomeBtn">🎉 Welcome to Windows Server 2026</li>
+            <!-- Updated with matching image icons -->
+            <li data-app="notepad"><span style="font-size:24px;">📝</span> Notepad</li>
+            <li data-app="games"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/9335791.png" style="width:24px;height:24px;"> Games</li>
+            <li data-app="store"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Microsoft_Store_Fluent_Design_icon_Windows_11.png" style="width:24px;height:24px;"> Microsoft Store</li>
+            <li data-app="office"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/1486565573-microsoft-office_81557.webp" style="width:24px;height:24px;"> Microsoft Office</li>
+            <li data-app="cmd"><span style="font-size:24px;">>_</span> Command Prompt</li>
+            <li data-app="recycleBin"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Recyle_Bin_empty.webp" style="width:24px;height:24px;"> Recycle Bin</li>
+            <li id="aiChatBtn"><span style="font-size:24px;">🤖</span> AI Chat</li>
+            <li id="calendarBtn"><span style="font-size:24px;">📅</span> Calendar</li>
+            <li id="calculatorBtn"><span style="font-size:24px;">🧮</span> Calculator</li>
+            <li id="msAccountBtn"><span style="font-size:24px;">👤</span> Microsoft Account</li>
+            <li id="welcomeBtn"><span style="font-size:24px;">🎉</span> Welcome to Windows Server 2026</li>
             <div class="divider"></div>
-            <li id="documentsBtn">📄 Documents</li>
-            <li id="picturesBtn">🖼️ Pictures</li>
-            <li id="musicBtn">🎵 Music</li>
-            <li id="runBtn">▶️ Run...</li>
+            <li id="documentsBtn"><span style="font-size:24px;">📄</span> Documents</li>
+            <li id="picturesBtn"><span style="font-size:24px;">🖼️</span> Pictures</li>
+            <li id="musicBtn"><span style="font-size:24px;">🎵</span> Music</li>
+            <li id="runBtn"><span style="font-size:24px;">▶️</span> Run...</li>
             <div class="divider"></div>
-            <li id="settingsBtn">⚙️ Settings</li>
-            <li id="shutdownBtn">⏻ Shutdown</li>
-            <li id="restartBtn">🔄 Restart</li>
+            <li id="settingsBtn"><span style="font-size:24px;">⚙️</span> Settings</li>
+            <li id="shutdownBtn"><span style="font-size:24px;">⏻</span> Shutdown</li>
+            <li id="restartBtn"><span style="font-size:24px;">🔄</span> Restart</li>
         </ul>
     </div>
 </div>
@@ -423,17 +431,17 @@
     const originalRestoreAllApps = restoreAllApps;
     window.restoreAllApps = function() { originalRestoreAllApps(); saveState(); };
 
-    // --- APP LISTS ---
+    // --- APP LIST with all updated icons (using raw URLs) ---
     const APP_LIST = [
-        { id: "paint", name: "Paint", icon: "🎨", desktop: true },
-        { id: "myPC", name: "My PC", icon: "💻", desktop: true },
-        { id: "ie", name: "Internet Explorer", icon: "🌐", desktop: true },
+        { id: "paint", name: "Paint", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/MSPaint.webp", desktop: true },
+        { id: "myPC", name: "My PC", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/this-pc-computer-display-windows-11-icon.avif", desktop: true },
+        { id: "ie", name: "Internet Explorer", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Internet_Explorer_10%2B11_logo.svg.png", desktop: true },
         { id: "notepad", name: "Notepad", icon: "📝", desktop: true },
-        { id: "games", name: "Games", icon: "🎮", desktop: true },
-        { id: "store", name: "Microsoft Store", icon: "🛒", desktop: true },
-        { id: "office", name: "Microsoft Office", icon: "📊", desktop: true },
+        { id: "games", name: "Games", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/9335791.png", desktop: true },
+        { id: "store", name: "Microsoft Store", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Microsoft_Store_Fluent_Design_icon_Windows_11.png", desktop: true },
+        { id: "office", name: "Microsoft Office", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/1486565573-microsoft-office_81557.webp", desktop: true },
         { id: "cmd", name: "Command Prompt", icon: ">_", desktop: false },
-        { id: "recycleBin", name: "Recycle Bin", icon: "🗑️", desktop: false }
+        { id: "recycleBin", name: "Recycle Bin", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Recyle_Bin_empty.webp", desktop: false }
     ];
     let deletedApps = [], deletedDownloadedGames = [], openWindows = new Map(), desktopBgColor = "#1b4d2e", wallpaperUrl = null, wallpaperDataURL = null, taskbarAutoHide = false, iconSize = 80, iconSpacing = 100, taskbarHeight = 48, fontSize = 13, borderRadius = 12, animations = true, accentColor = "#2c5a3e", taskbarTransparency = 0.92, showHiddenFiles = false;
     let doubleClickSpeed = 500, windowOpacity = 1, mouseStyle = "default", windowSnap = true, iconTextShadow = true, iconLabelTransparency = 0.3;
@@ -503,11 +511,36 @@
         return w;
     }
 
-    // --- DESKTOP ICONS & POSITIONING ---
+    // --- DESKTOP ICONS & POSITIONING (supports image URLs) ---
     function getNextFreePosition() { let taken = []; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) { let p = appPositions[a.id]; if(p) taken.push(`${p.x},${p.y}`); } for(let f of customFolders) taken.push(`${f.x},${f.y}`); for(let f of desktopFiles) taken.push(`${f.x},${f.y}`); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) { let p = appPositions[`game_${g.id}`]; if(p) taken.push(`${p.x},${p.y}`); } for(let i=0;i<100;i++){ let x=20+(i%5)*iconSpacing, y=20+Math.floor(i/5)*iconSpacing; if(!taken.includes(`${x},${y}`)) return {x,y}; } return {x:20,y:20}; }
     function autoArrangeIcons() { let idx=0; let items = []; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) items.push({type:'app',id:a.id}); for(let f of customFolders) items.push({type:'folder',id:f.id}); for(let f of desktopFiles) items.push({type:'file',id:f.id}); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) items.push({type:'game',id:g.id}); for(let it of items) { let x=20+(idx%5)*iconSpacing, y=20+Math.floor(idx/5)*iconSpacing; if(it.type==='app') appPositions[it.id]={x,y}; else if(it.type==='folder') { let f=customFolders.find(f=>f.id==it.id); if(f) { f.x=x; f.y=y; } } else if(it.type==='file') { let f=desktopFiles.find(f=>f.id==it.id); if(f) { f.x=x; f.y=y; } } else if(it.type==='game') appPositions[`game_${it.id}`]={x,y}; idx++; } renderDesktopIcons(); }
-    function renderDesktopIcons() { desktopIconsContainer.innerHTML = ''; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) { let p=appPositions[a.id]||getNextFreePosition(); appPositions[a.id]=p; desktopIconsContainer.appendChild(createIcon('app',a.id,a.icon,a.name,p.x,p.y)); } for(let f of customFolders) desktopIconsContainer.appendChild(createIcon('folder',f.id,'📁',f.name,f.x,f.y)); for(let f of desktopFiles) desktopIconsContainer.appendChild(createIcon('file',f.id,'📄',f.name,f.x,f.y)); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) { let p=appPositions[`game_${g.id}`]||getNextFreePosition(); appPositions[`game_${g.id}`]=p; desktopIconsContainer.appendChild(createIcon('game',g.id,g.icon,g.name,p.x,p.y)); } let rp=appPositions['recycleBin']||{x:20,y:400}; appPositions['recycleBin']=rp; let rec=createIcon('app','recycleBin','🗑️','Recycle Bin',rp.x,rp.y); rec.addEventListener('dragover',e=>e.preventDefault()); rec.addEventListener('drop',handleDropOnRecycleBin); desktopIconsContainer.appendChild(rec); applyDesktopSettings(); saveState(); }
-    function createIcon(type,id,iconChar,label,left,top) { let d=document.createElement('div'); d.className='desktop-icon'; d.setAttribute('data-type',type); d.setAttribute('data-id',id); d.style.left=left+'px'; d.style.top=top+'px'; d.style.width=iconSize+'px'; d.style.background = `rgba(0,0,0,${iconLabelTransparency})`; d.style.backdropFilter = 'none'; d.innerHTML=`<div style="font-size:42px;">${iconChar}</div><span style="font-size:${fontSize}px">${label}</span>`; d.addEventListener('mousedown',startDrag); if(type==='app') d.addEventListener('dblclick',()=>launchApp(id)); else if(type==='folder') d.addEventListener('dblclick',()=>openFolder(id)); else if(type==='file') d.addEventListener('dblclick',()=>openFile(id)); else if(type==='game') d.addEventListener('dblclick',()=>{ let g=downloadedGames.find(g=>g.id==id); if(g&&g.launch) g.launch(); }); return d; }
+    function renderDesktopIcons() { desktopIconsContainer.innerHTML = ''; for(let a of APP_LIST.filter(a=>a.desktop && !deletedApps.includes(a.id))) { let p=appPositions[a.id]||getNextFreePosition(); appPositions[a.id]=p; desktopIconsContainer.appendChild(createIcon('app',a.id,a.icon,a.name,p.x,p.y)); } for(let f of customFolders) desktopIconsContainer.appendChild(createIcon('folder',f.id,'📁',f.name,f.x,f.y)); for(let f of desktopFiles) desktopIconsContainer.appendChild(createIcon('file',f.id,'📄',f.name,f.x,f.y)); for(let g of downloadedGames) if(!deletedDownloadedGames.includes(g.id)) { let p=appPositions[`game_${g.id}`]||getNextFreePosition(); appPositions[`game_${g.id}`]=p; desktopIconsContainer.appendChild(createIcon('game',g.id,g.icon,g.name,p.x,p.y)); } let rp=appPositions['recycleBin']||{x:20,y:400}; appPositions['recycleBin']=rp; let rec=createIcon('app','recycleBin',APP_LIST.find(a=>a.id==='recycleBin').icon,'Recycle Bin',rp.x,rp.y); rec.addEventListener('dragover',e=>e.preventDefault()); rec.addEventListener('drop',handleDropOnRecycleBin); desktopIconsContainer.appendChild(rec); applyDesktopSettings(); saveState(); }
+    function createIcon(type,id,iconChar,label,left,top) {
+        let d=document.createElement('div');
+        d.className='desktop-icon';
+        d.setAttribute('data-type',type);
+        d.setAttribute('data-id',id);
+        d.style.left=left+'px';
+        d.style.top=top+'px';
+        d.style.width=iconSize+'px';
+        d.style.background = `rgba(0,0,0,${iconLabelTransparency})`;
+        d.style.backdropFilter = 'none';
+        
+        let iconHtml = '';
+        if (iconChar.startsWith('http')) {
+            iconHtml = `<img src="${iconChar}" alt="${label}" style="width:42px; height:42px; object-fit:contain;">`;
+        } else {
+            iconHtml = `<div style="font-size:42px;">${iconChar}</div>`;
+        }
+        d.innerHTML = `${iconHtml}<span style="font-size:${fontSize}px">${label}</span>`;
+        
+        d.addEventListener('mousedown',startDrag);
+        if(type==='app') d.addEventListener('dblclick',()=>launchApp(id));
+        else if(type==='folder') d.addEventListener('dblclick',()=>openFolder(id));
+        else if(type==='file') d.addEventListener('dblclick',()=>openFile(id));
+        else if(type==='game') d.addEventListener('dblclick',()=>{ let g=downloadedGames.find(g=>g.id==id); if(g&&g.launch) g.launch(); });
+        return d;
+    }
     function startDrag(e) { let ic=e.target.closest('.desktop-icon'); if(!ic) return; e.preventDefault(); dragTarget=ic; let r=ic.getBoundingClientRect(); dragOffsetX=e.clientX-r.left; dragOffsetY=e.clientY-r.top; dragStartX=e.clientX; dragStartY=e.clientY; isDraggingForMove=false; ic.classList.add('dragging'); document.addEventListener('mousemove',onDragMove); document.addEventListener('mouseup',stopDrag); }
     function onDragMove(e) { if(!dragTarget) return; let dx=Math.abs(e.clientX-dragStartX), dy=Math.abs(e.clientY-dragStartY); if(!isDraggingForMove && (dx>5||dy>5)) isDraggingForMove=true; if(isDraggingForMove) { let l=e.clientX-dragOffsetX, t=e.clientY-dragOffsetY; l=Math.min(Math.max(l,0),window.innerWidth-dragTarget.offsetWidth); t=Math.min(Math.max(t,0),window.innerHeight-70); dragTarget.style.left=l+'px'; dragTarget.style.top=t+'px'; } }
     function stopDrag(e) { if(!dragTarget) return; dragTarget.classList.remove('dragging'); let type=dragTarget.getAttribute('data-type'), id=dragTarget.getAttribute('data-id'); let under=document.elementsFromPoint(e.clientX,e.clientY)[0]; let recycle=under.closest('.desktop-icon[data-id="recycleBin"]'); if(recycle && (type==='app'||type==='file'||type==='game')) { if(type==='app' && !deletedApps.includes(id)) { deletedApps.push(id); } else if(type==='file') { desktopFiles=desktopFiles.filter(f=>f.id!=id); } else if(type==='game') { uninstallGame(id); } renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); dragTarget=null; document.removeEventListener('mousemove',onDragMove); document.removeEventListener('mouseup',stopDrag); saveState(); return; } if(isDraggingForMove) { let l=parseFloat(dragTarget.style.left), t=parseFloat(dragTarget.style.top); if(type==='app') appPositions[id]={x:l,y:t}; else if(type==='folder') { let f=customFolders.find(f=>f.id==id); if(f) { f.x=l; f.y=t; } } else if(type==='file') { let f=desktopFiles.find(f=>f.id==id); if(f) { f.x=l; f.y=t; } } else if(type==='game') appPositions[`game_${id}`]={x:l,y:t}; saveState(); } dragTarget=null; document.removeEventListener('mousemove',onDragMove); document.removeEventListener('mouseup',stopDrag); }
@@ -520,10 +553,10 @@
     function restoreAllApps() { if(deletedApps.length===0) return; deletedApps.forEach(appId=>{ if(!appPositions[appId]) appPositions[appId]=getNextFreePosition(); }); deletedApps=[]; renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); saveState(); alert("All apps restored from Recycle Bin."); }
     function uninstallGame(gid) { downloadedGames = downloadedGames.filter(g => g.id != gid); deletedDownloadedGames.push(gid); renderDesktopIcons(); saveState(); }
 
-    // --- DOWNLOAD QUEUE & STORE (only Pinterest) ---
+    // --- DOWNLOAD QUEUE & STORE (Pinterest with image logo) ---
     function showDownloadAnimation(callback) { let overlay=document.createElement('div'); overlay.className='download-overlay'; overlay.innerHTML=`<div class="download-box"><h3>Downloading...</h3><div class="download-progress"><div class="download-bar" id="dlBar"></div></div><p id="dlText">0%</p></div>`; document.body.appendChild(overlay); let bar=overlay.querySelector('#dlBar'), text=overlay.querySelector('#dlText'); let duration=5000+Math.random()*15000; let start=Date.now(); let interval=setInterval(()=>{ let elapsed=Date.now()-start; let percent=Math.min(100, (elapsed/duration)*100); bar.style.width=percent+'%'; text.innerText=Math.floor(percent)+'%'; if(percent>=100) { clearInterval(interval); setTimeout(()=>{ overlay.remove(); callback(); },200); } },50); }
     const storeGames = [
-        { id:"pinterest", name:"Pinterest", icon:"📌", createWindow:()=>null }
+        { id:"pinterest", name:"Pinterest", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Pinterest-logo.png", createWindow:()=>null }
     ];
     function installGame(def) {
         if(downloadingNow) { alert("Please wait, another download is in progress."); return; }
@@ -901,11 +934,14 @@
         setTimeout(()=>{ let container = document.getElementById('officeView'); if(!container) return; function renderProjectList() { let listDiv = document.getElementById('projectList'); if(!listDiv) return; if(officeProjects.length===0) { listDiv.innerHTML='<p>No projects. Click "New Project" to create one.</p>'; return; } listDiv.innerHTML = officeProjects.map(p => `<div class="office-project-item" data-id="${p.id}"><span>📄 ${escapeHtml(p.name)}</span><div><button class="editProject">Edit</button> <button class="deleteProject">Delete</button></div></div>`).join(''); listDiv.querySelectorAll('.editProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); openProjectEditor(id); }; }); listDiv.querySelectorAll('.deleteProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); officeProjects=officeProjects.filter(p=>p.id!=id); renderProjectList(); saveState(); }; }); } function openProjectEditor(id) { let project = officeProjects.find(p=>p.id==id); if(!project) return; let win=createWindow(`Office - ${project.name}`, `<div class="office-editor"><input type="text" id="projName" value="${escapeHtml(project.name)}" style="width:100%; margin-bottom:10px;"><h4>Text</h4><textarea id="projText">${escapeHtml(project.textContent||'')}</textarea><h4>Drawing</h4><canvas id="officeCanvas" width="400" height="200" class="office-drawing" style="background:white;"></canvas><div><button id="clearCanvas">Clear Drawing</button></div><h4>Images</h4><input type="file" id="imageUpload" accept="image/*"><div id="imageList"></div><button id="saveProject">Save Project</button></div>`, `office_edit_${id}`); document.body.appendChild(win); let canvas=win.querySelector('#officeCanvas'), ctx=canvas.getContext('2d'); let drawing=false; if(project.drawingDataURL) { let img=new Image(); img.onload=()=>ctx.drawImage(img,0,0,canvas.width,canvas.height); img.src=project.drawingDataURL; } canvas.addEventListener('mousedown',()=>drawing=true); canvas.addEventListener('mouseup',()=>drawing=false); canvas.addEventListener('mousemove',(e)=>{ if(!drawing) return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let x=(e.clientX-rect.left)*sx, y=(e.clientY-rect.top)*sy; ctx.fillStyle='black'; ctx.fillRect(x-2,y-2,4,4); }); win.querySelector('#clearCanvas').onclick=()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); }; let imageList=win.querySelector('#imageList'); function refreshImages() { imageList.innerHTML=project.images?.map((img,idx)=>`<div><img src="${img}" style="max-width:100px; max-height:100px;"> <button data-idx="${idx}">Remove</button></div>`).join('')||''; imageList.querySelectorAll('button').forEach(btn=>{ btn.onclick=()=>{ let idx=parseInt(btn.getAttribute('data-idx')); project.images.splice(idx,1); refreshImages(); saveState(); }; }); } refreshImages(); win.querySelector('#imageUpload').onchange=(e)=>{ let file=e.target.files[0]; if(file){ let reader=new FileReader(); reader.onload=(ev)=>{ if(!project.images) project.images=[]; project.images.push(ev.target.result); refreshImages(); saveState(); }; reader.readAsDataURL(file); } }; win.querySelector('#saveProject').onclick=()=>{ project.name=win.querySelector('#projName').value; project.textContent=win.querySelector('#projText').value; project.drawingDataURL=canvas.toDataURL(); renderProjectList(); win.close(); saveState(); }; } function createNewProject() { let name=prompt("Project name:","My Project"); if(!name) return; let newId=Date.now()+Math.random(); officeProjects.push({ id:newId, name:name, textContent:"", drawingDataURL:null, images:[] }); renderProjectList(); saveState(); } document.getElementById('newProjectBtn').onclick=createNewProject; renderProjectList(); },50); return html;
     }
 
-    // --- STORE UI ---
+    // --- STORE UI (Pinterest with logo) ---
     function storeUI() {
         if (!loggedIn) return `<div class="account-locked"><h3>🛒 Microsoft Store</h3><p>You need a Microsoft Account to access the Store.</p><p>Please go to Start → Microsoft Account and create one.</p></div>`;
         let html='<h3>Microsoft Store</h3><div id="storeItemsContainer" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">';
-        storeGames.forEach(g=>{ html+=`<div class="store-item" data-game="${g.id}" style="background:#d4cfb8;padding:10px;border-radius:8px;text-align:center;cursor:pointer;">${g.icon} ${g.name}<br><small>Click to install</small></div>`; });
+        storeGames.forEach(g=>{ 
+            let iconHtml = g.icon.startsWith('http') ? `<img src="${g.icon}" style="width:32px;height:32px;object-fit:contain;">` : g.icon;
+            html+=`<div class="store-item" data-game="${g.id}" style="background:#d4cfb8;padding:10px;border-radius:8px;text-align:center;cursor:pointer;">${iconHtml} ${g.name}<br><small>Click to install</small></div>`; 
+        });
         html+='</div>'; return html;
     }
     function initStore(win){
@@ -913,7 +949,7 @@
         if (container) container.addEventListener('click', (e) => { const item = e.target.closest('.store-item'); if (item) { const id = item.getAttribute('data-game'); const def = storeGames.find(g => g.id === id); if (def) installGame(def); } });
     }
 
-    // --- SETTINGS ---
+    // --- SETTINGS with "Load any Windows" WIN95 button ---
     function openSettings() {
         const wallpapers = [
             { name: "Classic Green", type: "color", value: "#1b4d2e" },
@@ -932,7 +968,8 @@
             container.innerHTML = '';
             downloadedGames.forEach(game => {
                 const div = document.createElement('div'); div.className = 'installed-app';
-                div.innerHTML = `<span>${game.icon} ${game.name}</span><div style="display:flex; gap:5px;"><button class="open-btn" data-id="${game.id}">Open</button><button class="show-btn" data-id="${game.id}">Show on Desktop</button><button class="uninstall-btn" data-id="${game.id}">Uninstall</button></div>`;
+                let iconHtml = game.icon.startsWith('http') ? `<img src="${game.icon}" style="width:24px;height:24px;object-fit:contain;">` : game.icon;
+                div.innerHTML = `<span>${iconHtml} ${game.name}</span><div style="display:flex; gap:5px;"><button class="open-btn" data-id="${game.id}">Open</button><button class="show-btn" data-id="${game.id}">Show on Desktop</button><button class="uninstall-btn" data-id="${game.id}">Uninstall</button></div>`;
                 container.appendChild(div);
             });
             container.querySelectorAll('.open-btn').forEach(btn => btn.addEventListener('click', () => { const game = downloadedGames.find(g => g.id === btn.getAttribute('data-id')); if (game && game.launch) game.launch(); }));
@@ -962,10 +999,18 @@
             <h4>Installed Store Apps</h4><div id="installedAppsList"></div>
             <h4>Taskbar</h4><label>Auto-hide Taskbar: <input type="checkbox" id="ah" ${taskbarAutoHide?'checked':''}></label><br>
             <h4>Theme</h4><select id="thm"><option value="green">Green</option><option value="blue">Blue</option><option value="dark">Dark</option></select><br>
+            <h4>Load any Windows</h4>
+            <button id="win95Btn" class="win95-btn">🖥️ WIN95</button>
+            <br><br>
             <button id="apply">Apply All</button>
             <div class="reset-warning"><button id="resetPCBtn" style="background:#aa3333; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">⚠️ Reset this PC</button><p style="font-size:12px; margin-top:5px;">This will erase all your installed apps, files, folders and settings.</p></div>
         </div>`;
         let win = createWindow('Settings', html, 'settings'); document.body.appendChild(win);
+        
+        win.querySelector('#win95Btn').addEventListener('click', () => {
+            window.open('https://krisxxxllkrisipurvanov-cpu.github.io/Windows-95/', '_blank');
+        });
+        
         renderInstalledAppsList();
         const grid = win.querySelector('#wallpaperGrid');
         wallpapers.forEach(wp => {
@@ -1018,7 +1063,7 @@
         }));
     }
 
-    // --- MUSIC FOLDER (only Startup sound, plays actual boot audio) ---
+    // --- MUSIC FOLDER (only Startup sound) ---
     function openMusicFolder() {
         let html = '<h3>🎵 Music</h3><div style="max-height:350px; overflow-y:auto;">';
         html += `<div class="music-item"><span style="font-size:24px;">🎵</span> <div><strong>Startup sound</strong><br><small>Windows Server 2003</small></div><button id="playStartupSound">▶ Play</button></div>`;
