@@ -94,6 +94,9 @@
         .music-item button { margin-left: auto; background: #2c5a3e; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
         .win95-btn { background: #c0c0c0; border: 2px outset #fff; padding: 8px 16px; font-weight: bold; cursor: pointer; margin: 5px 0; }
         .win95-btn:hover { background: #d4d0c8; }
+        .chrome-search { display: flex; gap: 8px; margin: 15px 0; }
+        .chrome-search input { flex: 1; padding: 8px; border: 1px solid #aaa; border-radius: 20px; }
+        .chrome-search button { padding: 8px 20px; background: #1a73e8; color: white; border: none; border-radius: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -118,27 +121,26 @@
     <div class="start-menu" id="startMenu">
         <div class="start-header">🌟 Windows Server 2026</div>
         <ul class="start-items">
-            <!-- Updated with custom image icons -->
+            <!-- Recycle Bin removed from Start menu -->
             <li data-app="notepad"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Windows_Notepad_icon.png" style="width:24px;height:24px;"> Notepad</li>
             <li data-app="games"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/9335791.png" style="width:24px;height:24px;"> Games</li>
             <li data-app="store"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Microsoft_Store_Fluent_Design_icon_Windows_11.png" style="width:24px;height:24px;"> Microsoft Store</li>
             <li data-app="office"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/1486565573-microsoft-office_81557.webp" style="width:24px;height:24px;"> Microsoft Office</li>
             <li data-app="cmd"><span style="font-size:24px;">>_</span> Command Prompt</li>
-            <li data-app="recycleBin"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Recyle_Bin_empty.webp" style="width:24px;height:24px;"> Recycle Bin</li>
             <li id="aiChatBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/deepseek.png" style="width:24px;height:24px;"> AI Chat</li>
             <li id="calendarBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Calendar-icon.png" style="width:24px;height:24px;"> Calendar</li>
             <li id="calculatorBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Windows_Calculator_icon.png" style="width:24px;height:24px;"> Calculator</li>
             <li id="msAccountBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Microsoft_Account_Logo.svg.png" style="width:24px;height:24px;"> Microsoft Account</li>
-            <li id="welcomeBtn"><span style="font-size:24px;">🎉</span> Welcome to Windows Server 2026</li>
+            <li id="welcomeBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Windows_11_USER_ACCOUNT_CONTROL.png" style="width:24px;height:24px;"> Welcome to Windows Server 2026</li>
             <div class="divider"></div>
-            <li id="documentsBtn"><span style="font-size:24px;">📄</span> Documents</li>
+            <li id="documentsBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/windows_11_library_documents_icon_by_silentscreamvlogs_deqmc8i-fullview.png" style="width:24px;height:24px;"> Documents</li>
             <li id="picturesBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/photos-newicon.png" style="width:24px;height:24px;"> Pictures</li>
             <li id="musicBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/deqmc77-33847091-bb12-4bf3-9621-98ea50575f22.png" style="width:24px;height:24px;"> Music</li>
             <li id="runBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/deqmb2f-c96c5c1d-07e8-47b6-a49f-6b99f1d28c46.png" style="width:24px;height:24px;"> Run...</li>
             <div class="divider"></div>
             <li id="settingsBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Settings_Windows_10x11.webp" style="width:24px;height:24px;"> Settings</li>
             <li id="shutdownBtn"><span style="font-size:24px;">⏻</span> Shutdown</li>
-            <li id="restartBtn"><span style="font-size:24px;">🔄</span> Restart</li>
+            <li id="restartBtn"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/11675516.png" style="width:24px;height:24px;"> Restart</li>
         </ul>
     </div>
 </div>
@@ -390,6 +392,8 @@
             downloadedGames = (state.downloadedGames || []).map(g => {
                 if (g.id === 'pinterest') {
                     return { id: g.id, name: g.name, icon: g.icon, launch: () => { openPinterestApp(); } };
+                } else if (g.id === 'chrome') {
+                    return { id: g.id, name: g.name, icon: g.icon, launch: () => { openChromeApp(); } };
                 }
                 return null;
             }).filter(g => g);
@@ -431,7 +435,7 @@
     const originalRestoreAllApps = restoreAllApps;
     window.restoreAllApps = function() { originalRestoreAllApps(); saveState(); };
 
-    // --- APP LIST with updated Notepad icon ---
+    // --- APP LIST ---
     const APP_LIST = [
         { id: "paint", name: "Paint", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/MSPaint.webp", desktop: true },
         { id: "myPC", name: "My PC", icon: "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/this-pc-computer-display-windows-11-icon.avif", desktop: true },
@@ -553,17 +557,23 @@
     function restoreAllApps() { if(deletedApps.length===0) return; deletedApps.forEach(appId=>{ if(!appPositions[appId]) appPositions[appId]=getNextFreePosition(); }); deletedApps=[]; renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); saveState(); alert("All apps restored from Recycle Bin."); }
     function uninstallGame(gid) { downloadedGames = downloadedGames.filter(g => g.id != gid); deletedDownloadedGames.push(gid); renderDesktopIcons(); saveState(); }
 
-    // --- DOWNLOAD QUEUE & STORE (Pinterest with image logo) ---
+    // --- DOWNLOAD QUEUE & STORE (Pinterest + Google Chrome) ---
     function showDownloadAnimation(callback) { let overlay=document.createElement('div'); overlay.className='download-overlay'; overlay.innerHTML=`<div class="download-box"><h3>Downloading...</h3><div class="download-progress"><div class="download-bar" id="dlBar"></div></div><p id="dlText">0%</p></div>`; document.body.appendChild(overlay); let bar=overlay.querySelector('#dlBar'), text=overlay.querySelector('#dlText'); let duration=5000+Math.random()*15000; let start=Date.now(); let interval=setInterval(()=>{ let elapsed=Date.now()-start; let percent=Math.min(100, (elapsed/duration)*100); bar.style.width=percent+'%'; text.innerText=Math.floor(percent)+'%'; if(percent>=100) { clearInterval(interval); setTimeout(()=>{ overlay.remove(); callback(); },200); } },50); }
     const storeGames = [
-        { id:"pinterest", name:"Pinterest", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Pinterest-logo.png", createWindow:()=>null }
+        { id:"pinterest", name:"Pinterest", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Pinterest-logo.png", createWindow:()=>null },
+        { id:"chrome", name:"Google Chrome", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Google_Chrome_icon_(February_2022).svg.png", createWindow:()=>null }
     ];
     function installGame(def) {
         if(downloadingNow) { alert("Please wait, another download is in progress."); return; }
         if(downloadedGames.some(g=>g.id===def.id)) { alert(`${def.name} is already installed!`); return; }
         downloadingNow=true;
         showDownloadAnimation(()=>{
-            let newGame={ id:def.id, name:def.name, icon:def.icon, launch:()=>{ openPinterestApp(); } };
+            let newGame={ id:def.id, name:def.name, icon:def.icon };
+            if (def.id === 'pinterest') {
+                newGame.launch = () => { openPinterestApp(); };
+            } else if (def.id === 'chrome') {
+                newGame.launch = () => { openChromeApp(); };
+            }
             downloadedGames.push(newGame);
             const idx = deletedDownloadedGames.indexOf(def.id);
             if (idx !== -1) deletedDownloadedGames.splice(idx, 1);
@@ -572,6 +582,41 @@
             saveState();
             alert(`${def.name} installed!`);
         });
+    }
+
+    // --- GOOGLE CHROME APP ---
+    function openChromeApp() {
+        const chromeHtml = `
+            <div style="padding:20px; text-align:center;">
+                <img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Google_Chrome_icon_(February_2022).svg.png" style="width:64px;height:64px;">
+                <h2>Welcome to Google Chrome</h2>
+                <p>The fast, secure browser from Google</p>
+                <div class="chrome-search">
+                    <input type="text" id="chromeSearchInput" placeholder="Search Google or type a URL" style="flex:1; padding:10px; border-radius:24px; border:1px solid #ccc;">
+                    <button id="chromeSearchBtn" style="background:#1a73e8; color:white; border:none; padding:10px 24px; border-radius:24px; cursor:pointer;">Search</button>
+                </div>
+                <p style="margin-top:20px; color:#666;">Your search will open in a new tab.</p>
+            </div>
+        `;
+        const win = createWindow('Google Chrome', chromeHtml, 'chrome');
+        document.body.appendChild(win);
+        const input = win.querySelector('#chromeSearchInput');
+        const btn = win.querySelector('#chromeSearchBtn');
+        const doSearch = () => {
+            let query = input.value.trim();
+            if (query) {
+                if (query.includes('.') && !query.includes(' ')) {
+                    if (!query.startsWith('http://') && !query.startsWith('https://')) {
+                        query = 'https://' + query;
+                    }
+                    window.open(query, '_blank');
+                } else {
+                    window.open('https://www.google.com/search?q=' + encodeURIComponent(query), '_blank');
+                }
+            }
+        };
+        btn.onclick = doSearch;
+        input.addEventListener('keypress', (e) => { if(e.key === 'Enter') doSearch(); });
     }
 
     // --- ENHANCED PAINT with Save button ---
@@ -934,7 +979,7 @@
         setTimeout(()=>{ let container = document.getElementById('officeView'); if(!container) return; function renderProjectList() { let listDiv = document.getElementById('projectList'); if(!listDiv) return; if(officeProjects.length===0) { listDiv.innerHTML='<p>No projects. Click "New Project" to create one.</p>'; return; } listDiv.innerHTML = officeProjects.map(p => `<div class="office-project-item" data-id="${p.id}"><span>📄 ${escapeHtml(p.name)}</span><div><button class="editProject">Edit</button> <button class="deleteProject">Delete</button></div></div>`).join(''); listDiv.querySelectorAll('.editProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); openProjectEditor(id); }; }); listDiv.querySelectorAll('.deleteProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); officeProjects=officeProjects.filter(p=>p.id!=id); renderProjectList(); saveState(); }; }); } function openProjectEditor(id) { let project = officeProjects.find(p=>p.id==id); if(!project) return; let win=createWindow(`Office - ${project.name}`, `<div class="office-editor"><input type="text" id="projName" value="${escapeHtml(project.name)}" style="width:100%; margin-bottom:10px;"><h4>Text</h4><textarea id="projText">${escapeHtml(project.textContent||'')}</textarea><h4>Drawing</h4><canvas id="officeCanvas" width="400" height="200" class="office-drawing" style="background:white;"></canvas><div><button id="clearCanvas">Clear Drawing</button></div><h4>Images</h4><input type="file" id="imageUpload" accept="image/*"><div id="imageList"></div><button id="saveProject">Save Project</button></div>`, `office_edit_${id}`); document.body.appendChild(win); let canvas=win.querySelector('#officeCanvas'), ctx=canvas.getContext('2d'); let drawing=false; if(project.drawingDataURL) { let img=new Image(); img.onload=()=>ctx.drawImage(img,0,0,canvas.width,canvas.height); img.src=project.drawingDataURL; } canvas.addEventListener('mousedown',()=>drawing=true); canvas.addEventListener('mouseup',()=>drawing=false); canvas.addEventListener('mousemove',(e)=>{ if(!drawing) return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let x=(e.clientX-rect.left)*sx, y=(e.clientY-rect.top)*sy; ctx.fillStyle='black'; ctx.fillRect(x-2,y-2,4,4); }); win.querySelector('#clearCanvas').onclick=()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); }; let imageList=win.querySelector('#imageList'); function refreshImages() { imageList.innerHTML=project.images?.map((img,idx)=>`<div><img src="${img}" style="max-width:100px; max-height:100px;"> <button data-idx="${idx}">Remove</button></div>`).join('')||''; imageList.querySelectorAll('button').forEach(btn=>{ btn.onclick=()=>{ let idx=parseInt(btn.getAttribute('data-idx')); project.images.splice(idx,1); refreshImages(); saveState(); }; }); } refreshImages(); win.querySelector('#imageUpload').onchange=(e)=>{ let file=e.target.files[0]; if(file){ let reader=new FileReader(); reader.onload=(ev)=>{ if(!project.images) project.images=[]; project.images.push(ev.target.result); refreshImages(); saveState(); }; reader.readAsDataURL(file); } }; win.querySelector('#saveProject').onclick=()=>{ project.name=win.querySelector('#projName').value; project.textContent=win.querySelector('#projText').value; project.drawingDataURL=canvas.toDataURL(); renderProjectList(); win.close(); saveState(); }; } function createNewProject() { let name=prompt("Project name:","My Project"); if(!name) return; let newId=Date.now()+Math.random(); officeProjects.push({ id:newId, name:name, textContent:"", drawingDataURL:null, images:[] }); renderProjectList(); saveState(); } document.getElementById('newProjectBtn').onclick=createNewProject; renderProjectList(); },50); return html;
     }
 
-    // --- STORE UI (Pinterest with logo) ---
+    // --- STORE UI ---
     function storeUI() {
         if (!loggedIn) return `<div class="account-locked"><h3>🛒 Microsoft Store</h3><p>You need a Microsoft Account to access the Store.</p><p>Please go to Start → Microsoft Account and create one.</p></div>`;
         let html='<h3>Microsoft Store</h3><div id="storeItemsContainer" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">';
@@ -949,7 +994,7 @@
         if (container) container.addEventListener('click', (e) => { const item = e.target.closest('.store-item'); if (item) { const id = item.getAttribute('data-game'); const def = storeGames.find(g => g.id === id); if (def) installGame(def); } });
     }
 
-    // --- SETTINGS with "Load any Windows" WIN95 button ---
+    // --- SETTINGS ---
     function openSettings() {
         const wallpapers = [
             { name: "Classic Green", type: "color", value: "#1b4d2e" },
@@ -1063,20 +1108,28 @@
         }));
     }
 
-    // --- MUSIC FOLDER (only Startup sound) ---
+    // --- MUSIC FOLDER (now with 4 tracks) ---
     function openMusicFolder() {
         let html = '<h3>🎵 Music</h3><div style="max-height:350px; overflow-y:auto;">';
         html += `<div class="music-item"><span style="font-size:24px;">🎵</span> <div><strong>Startup sound</strong><br><small>Windows Server 2003</small></div><button id="playStartupSound">▶ Play</button></div>`;
+        html += `<div class="music-item"><span style="font-size:24px;">🎵</span> <div><strong>Windows XP Setup</strong><br><small>Installation music</small></div><button id="playXPSetup">▶ Play</button></div>`;
+        html += `<div class="music-item"><span style="font-size:24px;">🎵</span> <div><strong>KITTEH KITTEH Scatman cat</strong><br><small>Scatman cat</small></div><button id="playScatman">▶ Play</button></div>`;
+        html += `<div class="music-item"><span style="font-size:24px;">🎵</span> <div><strong>Its Flat Fuh Friday</strong><br><small>You fucking losers</small></div><button id="playFlatFriday">▶ Play</button></div>`;
         html += '</div>';
         const win = createWindow('Music', html, 'music'); document.body.appendChild(win);
+        
         win.querySelector('#playStartupSound').addEventListener('click', () => {
-            if (bootAudio) {
-                bootAudio.currentTime = 0;
-                bootAudio.play().catch(e => alert("Audio playback failed. Click the desktop first to enable sound."));
-            } else {
-                const audio = new Audio(BOOT_SOUND_URL);
-                audio.play().catch(e => alert("Audio playback failed. Click the desktop first to enable sound."));
-            }
+            if (bootAudio) { bootAudio.currentTime = 0; bootAudio.play().catch(e => alert("Audio playback failed.")); }
+            else { new Audio(BOOT_SOUND_URL).play().catch(e => alert("Audio playback failed.")); }
+        });
+        win.querySelector('#playXPSetup').addEventListener('click', () => {
+            new Audio("https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/5f0dd1ea30887872846148.mp3").play().catch(e => alert("Audio playback failed."));
+        });
+        win.querySelector('#playScatman').addEventListener('click', () => {
+            new Audio("https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Screen%20Recording%202026-04-13%20224940.mp3").play().catch(e => alert("Audio playback failed."));
+        });
+        win.querySelector('#playFlatFriday').addEventListener('click', () => {
+            new Audio("https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/its-flat-fuck-friday-you-fucking-losers.mp3").play().catch(e => alert("Audio playback failed."));
         });
     }
 
