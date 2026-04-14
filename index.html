@@ -125,6 +125,7 @@
     <div class="start-menu" id="startMenu">
         <div class="start-header">🌟 Windows Server 2026</div>
         <ul class="start-items">
+            <!-- Discord moved to Microsoft Store -->
             <li data-app="notepad"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Windows_Notepad_icon.png" style="width:24px;height:24px;"> Notepad</li>
             <li data-app="games"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/9335791.png" style="width:24px;height:24px;"> Games</li>
             <li data-app="store"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Microsoft_Store_Fluent_Design_icon_Windows_11.png" style="width:24px;height:24px;"> Microsoft Store</li>
@@ -327,7 +328,7 @@
         }
     }
 
-    // --- CORE VARIABLES (added new settings) ---
+    // --- CORE VARIABLES (removed taskbarPosition) ---
     function saveState() {
         const state = {
             deletedApps,
@@ -358,7 +359,6 @@
             iconTextShadow,
             iconLabelTransparency,
             showIconLabels,
-            taskbarPosition,
             clockFormat
         };
         localStorage.setItem('win2026_state', JSON.stringify(state));
@@ -396,18 +396,17 @@
             iconTextShadow = state.iconTextShadow !== undefined ? state.iconTextShadow : true;
             iconLabelTransparency = state.iconLabelTransparency !== undefined ? state.iconLabelTransparency : 0.3;
             showIconLabels = state.showIconLabels !== undefined ? state.showIconLabels : true;
-            taskbarPosition = state.taskbarPosition || 'bottom';
             clockFormat = state.clockFormat || '12h';
             downloadedGames = (state.downloadedGames || []).map(g => {
                 if (g.id === 'pinterest') return { id: g.id, name: g.name, icon: g.icon, launch: () => { openPinterestApp(); } };
                 else if (g.id === 'chrome') return { id: g.id, name: g.name, icon: g.icon, launch: () => { openChromeApp(); } };
                 else if (g.id === 'bank') return { id: g.id, name: g.name, icon: g.icon, launch: () => { openBankApp(); } };
+                else if (g.id === 'discord') return { id: g.id, name: g.name, icon: g.icon, launch: () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/Discord/'; } };
                 return null;
             }).filter(g => g);
             applyWallpaper();
             applyAccentAndTaskbar();
             applyExtraSettings();
-            updateTaskbarPosition();
             return true;
         } catch(e) { console.warn("Failed to load state", e); return false; }
     }
@@ -422,26 +421,7 @@
         document.querySelectorAll('.desktop-icon').forEach(icon => {
             icon.style.background = `rgba(0,0,0,${iconLabelTransparency})`;
         });
-        updateClock(); // refresh clock format
-    }
-
-    function updateTaskbarPosition() {
-        const taskbarEl = document.getElementById('taskbar');
-        taskbarEl.classList.remove('bottom', 'top');
-        taskbarEl.classList.add(taskbarPosition);
-        if (taskbarAutoHide) {
-            taskbarEl.classList.add('auto-hide');
-        } else {
-            taskbarEl.classList.remove('auto-hide');
-        }
-        const desktopDiv = document.getElementById('desktop');
-        if (taskbarPosition === 'top') {
-            desktopDiv.style.paddingTop = taskbarHeight + 'px';
-            desktopDiv.style.paddingBottom = '0';
-        } else {
-            desktopDiv.style.paddingTop = '0';
-            desktopDiv.style.paddingBottom = taskbarHeight + 'px';
-        }
+        updateClock();
     }
 
     function resetAllData() {
@@ -478,7 +458,7 @@
     ];
     let deletedApps = [], deletedDownloadedGames = [], openWindows = new Map(), desktopBgColor = "#1b4d2e", wallpaperUrl = null, wallpaperDataURL = null, taskbarAutoHide = false, iconSize = 80, iconSpacing = 100, taskbarHeight = 48, fontSize = 13, borderRadius = 12, animations = true, accentColor = "#2c5a3e", taskbarTransparency = 0.92, showHiddenFiles = false;
     let doubleClickSpeed = 500, windowOpacity = 1, mouseStyle = "default", windowSnap = true, iconTextShadow = true, iconLabelTransparency = 0.3;
-    let showIconLabels = true, taskbarPosition = 'bottom', clockFormat = '12h';
+    let showIconLabels = true, clockFormat = '12h';
     let isBsodActive = false, system32Deleted = false;
     let customFolders = [], desktopFiles = [], appPositions = {}, downloadedGames = [];
     let officeProjects = [];
@@ -596,7 +576,6 @@
         if(!wallpaperUrl && !wallpaperDataURL) desktopDiv.style.backgroundColor=desktopBgColor; 
         if(taskbarAutoHide) taskbar.classList.add('auto-hide'); else taskbar.classList.remove('auto-hide'); 
         taskbar.style.height=taskbarHeight+'px'; 
-        updateTaskbarPosition();
         document.querySelectorAll('.app-window').forEach(w=>{ 
             w.style.borderRadius=borderRadius+'px'; 
             let h=w.querySelector('.window-header'); 
@@ -614,12 +593,13 @@
     function restoreAllApps() { if(deletedApps.length===0) return; deletedApps.forEach(appId=>{ if(!appPositions[appId]) appPositions[appId]=getNextFreePosition(); }); deletedApps=[]; renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); saveState(); alert("All apps restored from Recycle Bin."); }
     function uninstallGame(gid) { downloadedGames = downloadedGames.filter(g => g.id != gid); deletedDownloadedGames.push(gid); renderDesktopIcons(); saveState(); }
 
-    // --- DOWNLOAD QUEUE & STORE (Pinterest, Chrome, Bank) ---
+    // --- DOWNLOAD QUEUE & STORE (Pinterest, Chrome, Bank, Discord) ---
     function showDownloadAnimation(callback) { let overlay=document.createElement('div'); overlay.className='download-overlay'; overlay.innerHTML=`<div class="download-box"><h3>Downloading...</h3><div class="download-progress"><div class="download-bar" id="dlBar"></div></div><p id="dlText">0%</p></div>`; document.body.appendChild(overlay); let bar=overlay.querySelector('#dlBar'), text=overlay.querySelector('#dlText'); let duration=5000+Math.random()*15000; let start=Date.now(); let interval=setInterval(()=>{ let elapsed=Date.now()-start; let percent=Math.min(100, (elapsed/duration)*100); bar.style.width=percent+'%'; text.innerText=Math.floor(percent)+'%'; if(percent>=100) { clearInterval(interval); setTimeout(()=>{ overlay.remove(); callback(); },200); } },50); }
     const storeGames = [
         { id:"pinterest", name:"Pinterest", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Pinterest-logo.png" },
         { id:"chrome", name:"Google Chrome", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Google_Chrome_icon_(February_2022).svg.png" },
-        { id:"bank", name:"Microsoft Bank", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/bank_78392.webp" }
+        { id:"bank", name:"Microsoft Bank", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/bank_78392.webp" },
+        { id:"discord", name:"Discord", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/discord-color-icon.webp" }
     ];
     function installGame(def) {
         if(downloadingNow) { alert("Please wait, another download is in progress."); return; }
@@ -630,6 +610,7 @@
             if (def.id === 'pinterest') newGame.launch = () => { openPinterestApp(); };
             else if (def.id === 'chrome') newGame.launch = () => { openChromeApp(); };
             else if (def.id === 'bank') newGame.launch = () => { openBankApp(); };
+            else if (def.id === 'discord') newGame.launch = () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/Discord/'; };
             downloadedGames.push(newGame);
             const idx = deletedDownloadedGames.indexOf(def.id);
             if (idx !== -1) deletedDownloadedGames.splice(idx, 1);
@@ -1030,7 +1011,7 @@
         if (container) container.addEventListener('click', (e) => { const item = e.target.closest('.store-item'); if (item) { const id = item.getAttribute('data-game'); const def = storeGames.find(g => g.id === id); if (def) installGame(def); } });
     }
 
-    // --- SETTINGS with new options ---
+    // --- SETTINGS with updated labels and removed taskbar position ---
     function openSettings() {
         const wallpapers = [
             { name: "Classic Green", type: "color", value: "#1b4d2e" },
@@ -1072,12 +1053,6 @@
             <label>Label Transparency: <input type="range" id="labelTrans" min="0" max="1" step="0.01" value="${iconLabelTransparency}"></label><br>
             <label>Accent Color: <input type="color" id="accent" value="${accentColor}"></label><br>
             <label>Taskbar Transparency: <input type="range" id="tran" min="0.5" max="1" step="0.01" value="${taskbarTransparency}"></label><br>
-            <label>Taskbar Position: 
-                <select id="taskbarPosSelect">
-                    <option value="bottom" ${taskbarPosition==='bottom'?'selected':''}>Bottom</option>
-                    <option value="top" ${taskbarPosition==='top'?'selected':''}>Top</option>
-                </select>
-            </label><br>
             <label>Clock Format: 
                 <select id="clockFormatSelect">
                     <option value="12h" ${clockFormat==='12h'?'selected':''}>12-hour</option>
@@ -1091,7 +1066,7 @@
             <h4>Ready Wallpapers</h4><div class="wallpaper-grid" id="wallpaperGrid"></div>
             <h4>Custom Wallpaper</h4><input type="file" id="wallpaperUpload" accept="image/*"><br><button id="resetWallpaper">Reset to solid color</button>
             <h4>Installed Store Apps</h4><div id="installedAppsList"></div>
-            <h4>Taskbar</h4><label>Auto-hide Taskbar: <input type="checkbox" id="ah" ${taskbarAutoHide?'checked':''}></label><br>
+            <h4>Taskbar</h4><label>Hide taskbar: <input type="checkbox" id="ah" ${taskbarAutoHide?'checked':''}></label><br>
             <h4>Theme</h4><select id="thm"><option value="green">Green</option><option value="blue">Blue</option><option value="dark">Dark</option></select><br>
             <h4>Load any Windows</h4>
             <button id="win95Btn" class="win95-btn">🖥️ WIN95</button>
@@ -1107,7 +1082,7 @@
             if (confirm("Reset all settings to default values?")) {
                 iconSize = 80; iconSpacing = 100; taskbarHeight = 48; fontSize = 13; borderRadius = 12; windowOpacity = 1;
                 animations = true; windowSnap = true; iconTextShadow = true; showIconLabels = true; iconLabelTransparency = 0.3;
-                accentColor = "#2c5a3e"; taskbarTransparency = 0.92; taskbarPosition = 'bottom'; clockFormat = '12h';
+                accentColor = "#2c5a3e"; taskbarTransparency = 0.92; clockFormat = '12h';
                 mouseStyle = "default"; doubleClickSpeed = 500; showHiddenFiles = false; startupSoundEnabled = true;
                 desktopBgColor = "#1b4d2e"; wallpaperUrl = null; wallpaperDataURL = null;
                 applyWallpaper(); applyDesktopSettings(); applyAccentAndTaskbar(); applyExtraSettings(); updateClock();
@@ -1137,7 +1112,7 @@
             animations = win.querySelector('#anim').checked; windowSnap = win.querySelector('#snap').checked; iconTextShadow = win.querySelector('#textShadow').checked;
             showIconLabels = win.querySelector('#showLabels').checked; iconLabelTransparency = parseFloat(win.querySelector('#labelTrans').value);
             accentColor = win.querySelector('#accent').value; taskbarTransparency = parseFloat(win.querySelector('#tran').value);
-            taskbarPosition = win.querySelector('#taskbarPosSelect').value; clockFormat = win.querySelector('#clockFormatSelect').value;
+            clockFormat = win.querySelector('#clockFormatSelect').value;
             mouseStyle = win.querySelector('#mouse').value; doubleClickSpeed = parseInt(win.querySelector('#dbl').value);
             showHiddenFiles = win.querySelector('#hiddenFiles').checked; startupSoundEnabled = win.querySelector('#startupSound').checked;
             taskbarAutoHide = win.querySelector('#ah').checked;
