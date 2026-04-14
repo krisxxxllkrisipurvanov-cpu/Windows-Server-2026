@@ -8,16 +8,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; height: 100vh; width: 100vw; background: #0c0e14; }
-        .boot-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #1a2a3a, #0a0f1a); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; transition: opacity 0.8s ease; }
-        .boot-logo { font-size: 4rem; font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 20px #00a8ff; margin-bottom: 30px; }
-        .boot-logo span { color: #ffaa33; }
-        .boot-sub { font-size: 1rem; color: #bbb; margin-bottom: 40px; }
-        .boot-animation { width: 280px; height: 6px; background: #2c3e4e; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
-        .boot-progress { width: 0%; height: 100%; background: linear-gradient(90deg, #3bc9ff, #0066cc); border-radius: 10px; animation: bootProgress 2.5s ease forwards; }
-        @keyframes bootProgress { 0% { width: 0%; } 100% { width: 100%; } }
-        .boot-text { font-size: 0.85rem; color: #9aaebf; }
-        .sound-message { margin-top: 20px; background: rgba(0,0,0,0.6); padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; display: none; }
-        .desktop { display: none; width: 100%; height: 100%; background: #1b4d2e; position: relative; overflow: hidden; transition: background-color 0.2s, background-image 0.2s; background-size: cover; background-position: center; }
+        .desktop { width: 100%; height: 100%; background: #1b4d2e; position: relative; overflow: hidden; transition: background-color 0.2s, background-image 0.2s; background-size: cover; background-position: center; }
         .desktop-icons { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; }
         .desktop-icon { position: absolute; display: flex; flex-direction: column; align-items: center; width: 80px; cursor: pointer; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 6px 4px; color: white; text-shadow: 0 1px 2px black; transition: left 0.1s, top 0.1s; }
         .desktop-icon.dragging { opacity: 0.5; }
@@ -73,6 +64,7 @@
         .calendar { width: 100%; border-collapse: collapse; text-align: center; }
         .calendar th, .calendar td { padding: 8px; border: 1px solid #aaa; }
         .calendar .today { background: #ffaa66; }
+        .calendar-nav { display: flex; justify-content: space-between; margin-bottom: 10px; }
         .reset-warning { color: #ff6666; font-weight: bold; margin-top: 15px; border-top: 1px solid #aaa; padding-top: 10px; }
         .account-locked { background: #f0f0e0; text-align: center; padding: 40px; color: #666; }
         .installed-app { display: flex; align-items: center; justify-content: space-between; background: #e0dbc8; margin: 5px 0; padding: 8px; border-radius: 6px; gap: 8px; flex-wrap: wrap; }
@@ -101,17 +93,14 @@
         .bank-balance { font-size: 36px; text-align: center; margin: 20px 0; }
         .bank-buttons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
         .bank-buttons button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        .explorer-path { background: #fff; border: 1px solid #aaa; padding: 4px 8px; margin-bottom: 10px; border-radius: 4px; }
+        .explorer-items { display: flex; flex-direction: column; }
+        .explorer-item { display: flex; align-items: center; gap: 8px; padding: 6px; cursor: pointer; border-bottom: 1px solid #ddd; }
+        .explorer-item:hover { background: #e0dbc8; }
+        .explorer-back { margin-bottom: 8px; }
     </style>
 </head>
 <body>
-<div class="boot-screen" id="bootScreen">
-    <div class="boot-logo">Windows <span>Server 2026</span></div>
-    <div class="boot-sub">created by KrisXxXLL</div>
-    <div class="boot-animation"><div class="boot-progress"></div></div>
-    <div class="boot-text">Loading secure server environment...</div>
-    <div class="sound-message" id="bootSoundMsg">🔊 Click to play startup sound</div>
-</div>
-
 <div class="desktop" id="desktop">
     <div class="desktop-icons" id="desktopIconsContainer"></div>
     <div class="taskbar" id="taskbar">
@@ -125,7 +114,6 @@
     <div class="start-menu" id="startMenu">
         <div class="start-header">🌟 Windows Server 2026</div>
         <ul class="start-items">
-            <!-- Discord moved to Microsoft Store -->
             <li data-app="notepad"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Windows_Notepad_icon.png" style="width:24px;height:24px;"> Notepad</li>
             <li data-app="games"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/9335791.png" style="width:24px;height:24px;"> Games</li>
             <li data-app="store"><img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Microsoft_Store_Fluent_Design_icon_Windows_11.png" style="width:24px;height:24px;"> Microsoft Store</li>
@@ -150,6 +138,7 @@
 </div>
 
 <script>
+    (function(){
     // ==================== PERSISTENT STORAGE & ACCOUNT SYSTEM ====================
     let loggedIn = false;
     let accountUsername = "";
@@ -227,9 +216,10 @@
         alert("Logged out. Microsoft Office and Store are now locked.");
     }
 
-    // --- BOOT SOUND (plays on first user interaction) ---
+    // --- BOOT SOUND ---
     let bootAudio = null;
     let startupSoundEnabled = true;
+    let showWelcomeScreen = true;
     let soundPlayed = false;
     const BOOT_SOUND_URL = "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/windows-server-2003-uk-startup-sound.mp3";
 
@@ -237,40 +227,21 @@
         if (!startupSoundEnabled) return;
         bootAudio = new Audio(BOOT_SOUND_URL);
         bootAudio.load();
-
-        const soundMsg = document.getElementById('bootSoundMsg');
-
         const playSound = () => {
             if (soundPlayed || !bootAudio) return;
-            bootAudio.play().then(() => {
-                soundPlayed = true;
-                if (soundMsg) soundMsg.style.display = 'none';
-                cleanup();
-            }).catch(err => {
-                console.warn("Autoplay blocked; waiting for user interaction.", err);
-                if (soundMsg) soundMsg.style.display = 'block';
-            });
+            bootAudio.play().then(() => { soundPlayed = true; cleanup(); }).catch(err => {});
         };
-
         const cleanup = () => {
             document.removeEventListener('click', playSound);
             document.removeEventListener('touchstart', playSound);
             document.removeEventListener('keydown', playSound);
         };
-
         document.addEventListener('click', playSound, { once: true });
         document.addEventListener('touchstart', playSound, { once: true });
         document.addEventListener('keydown', playSound, { once: true });
-
-        setTimeout(() => {
-            if (!soundPlayed && soundMsg) {
-                soundMsg.style.display = 'block';
-                soundMsg.onclick = () => { playSound(); };
-            }
-        }, 1000);
     }
 
-    // --- MICROSOFT ACCOUNT UI (Start menu) with Logout button ---
+    // --- MICROSOFT ACCOUNT UI ---
     function openMicrosoftAccountUI() {
         if (loggedIn) {
             const win = createWindow("Microsoft Account", `
@@ -287,22 +258,13 @@
             document.body.appendChild(win);
             win.querySelector('#changePassBtn').onclick = () => {
                 let newPass = prompt("Enter new password:");
-                if (newPass && newPass.length > 0) {
-                    changePassword(newPass);
-                    alert("Password changed successfully!");
-                    win.close();
-                } else alert("Invalid password.");
+                if (newPass && newPass.length > 0) { changePassword(newPass); alert("Password changed successfully!"); win.close(); }
+                else alert("Invalid password.");
             };
             win.querySelector('#deleteAccountBtn').onclick = () => {
-                if (confirm("Delete your Microsoft Account? This will lock Office and Store.")) {
-                    deleteAccount();
-                    win.close();
-                }
+                if (confirm("Delete your Microsoft Account? This will lock Office and Store.")) { deleteAccount(); win.close(); }
             };
-            win.querySelector('#logoutBtn').onclick = () => {
-                logoutAccount();
-                win.close();
-            };
+            win.querySelector('#logoutBtn').onclick = () => { logoutAccount(); win.close(); };
         } else {
             const win = createWindow("Microsoft Account", `
                 <div style="padding:10px;">
@@ -317,49 +279,22 @@
             win.querySelector('#createAccBtn').onclick = () => {
                 let user = win.querySelector('#newUsername').value.trim();
                 let pass = win.querySelector('#newPassword').value.trim();
-                if (user && pass) {
-                    createAccount(user, pass);
-                    alert(`Account "${user}" created! You can now use Office and Store.`);
-                    win.close();
-                } else {
-                    alert("Please enter both username and password.");
-                }
+                if (user && pass) { createAccount(user, pass); alert(`Account "${user}" created! You can now use Office and Store.`); win.close(); }
+                else alert("Please enter both username and password.");
             };
         }
     }
 
-    // --- CORE VARIABLES (removed taskbarPosition) ---
+    // --- CORE VARIABLES ---
     function saveState() {
         const state = {
-            deletedApps,
-            deletedDownloadedGames,
-            customFolders,
-            desktopFiles,
-            appPositions,
+            deletedApps, deletedDownloadedGames, customFolders, desktopFiles, appPositions,
             downloadedGames: downloadedGames.map(g => ({ id: g.id, name: g.name, icon: g.icon })),
-            officeProjects,
-            desktopBgColor,
-            wallpaperUrl,
-            wallpaperDataURL,
-            taskbarAutoHide,
-            iconSize,
-            iconSpacing,
-            taskbarHeight,
-            fontSize,
-            borderRadius,
-            animations,
-            accentColor,
-            taskbarTransparency,
-            showHiddenFiles,
-            doubleClickSpeed,
-            windowOpacity,
-            mouseStyle,
-            startupSoundEnabled,
-            windowSnap,
-            iconTextShadow,
-            iconLabelTransparency,
-            showIconLabels,
-            clockFormat
+            officeProjects, desktopBgColor, wallpaperUrl, wallpaperDataURL, taskbarAutoHide,
+            iconSize, iconSpacing, taskbarHeight, fontSize, borderRadius, animations, accentColor,
+            taskbarTransparency, showHiddenFiles, doubleClickSpeed, windowOpacity, mouseStyle,
+            startupSoundEnabled, showWelcomeScreen, windowSnap, iconTextShadow, iconLabelTransparency,
+            showIconLabels, clockFormat
         };
         localStorage.setItem('win2026_state', JSON.stringify(state));
     }
@@ -392,6 +327,7 @@
             windowOpacity = state.windowOpacity !== undefined ? state.windowOpacity : 1;
             mouseStyle = state.mouseStyle || "default";
             startupSoundEnabled = state.startupSoundEnabled !== undefined ? state.startupSoundEnabled : true;
+            showWelcomeScreen = state.showWelcomeScreen !== undefined ? state.showWelcomeScreen : true;
             windowSnap = state.windowSnap !== undefined ? state.windowSnap : true;
             iconTextShadow = state.iconTextShadow !== undefined ? state.iconTextShadow : true;
             iconLabelTransparency = state.iconLabelTransparency !== undefined ? state.iconLabelTransparency : 0.3;
@@ -402,6 +338,7 @@
                 else if (g.id === 'chrome') return { id: g.id, name: g.name, icon: g.icon, launch: () => { openChromeApp(); } };
                 else if (g.id === 'bank') return { id: g.id, name: g.name, icon: g.icon, launch: () => { openBankApp(); } };
                 else if (g.id === 'discord') return { id: g.id, name: g.name, icon: g.icon, launch: () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/Discord/'; } };
+                else if (g.id === 'microsoftplus') return { id: g.id, name: g.name, icon: g.icon, launch: () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/MicrosoftPlus/'; } };
                 return null;
             }).filter(g => g);
             applyWallpaper();
@@ -464,7 +401,7 @@
     let officeProjects = [];
     let downloadingNow = false;
     let dragTarget = null, dragOffsetX = 0, dragOffsetY = 0, isDraggingForMove = false, dragStartX = 0, dragStartY = 0;
-    const bootScreen = document.getElementById('bootScreen'), desktopDiv = document.getElementById('desktop');
+    const desktopDiv = document.getElementById('desktop');
     const desktopIconsContainer = document.getElementById('desktopIconsContainer'), startMenu = document.getElementById('startMenu');
     const startBtn = document.getElementById('startBtn'), clockSpan = document.getElementById('clock'), taskbar = document.getElementById('taskbar');
     const taskbarItemsDiv = document.getElementById('taskbarItems'), internetStatusDiv = document.getElementById('internetStatus');
@@ -490,9 +427,7 @@
         taskbar.style.backdropFilter = `blur(${12 * taskbarTransparency}px)`;
     }
     function adjustColor(color, percent) {
-        let R = parseInt(color.substring(1,3), 16);
-        let G = parseInt(color.substring(3,5), 16);
-        let B = parseInt(color.substring(5,7), 16);
+        let R = parseInt(color.substring(1,3), 16), G = parseInt(color.substring(3,5), 16), B = parseInt(color.substring(5,7), 16);
         R = Math.min(255, Math.max(0, R + percent));
         G = Math.min(255, Math.max(0, G + percent));
         B = Math.min(255, Math.max(0, B + percent));
@@ -504,12 +439,7 @@
     setInterval(updateInternetStatus, 3000); updateInternetStatus();
     function updateClock() { 
         let d = new Date(); 
-        let timeStr;
-        if (clockFormat === '12h') {
-            timeStr = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        } else {
-            timeStr = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12: false});
-        }
+        let timeStr = clockFormat === '12h' ? d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12: false});
         clockSpan.innerText = timeStr + " - " + d.toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}); 
     }
     setInterval(updateClock, 1000); updateClock();
@@ -521,12 +451,9 @@
     function createWindow(title, html, appId) {
         let w = document.createElement('div');
         w.className='app-window';
-        w.style.left='100px';
-        w.style.top='80px';
-        w.style.zIndex=Date.now();
+        w.style.left='100px'; w.style.top='80px'; w.style.zIndex=Date.now();
         if(!animations) w.style.transition='none';
-        w.style.borderRadius=borderRadius+'px';
-        w.style.opacity = windowOpacity;
+        w.style.borderRadius=borderRadius+'px'; w.style.opacity = windowOpacity;
         w.innerHTML=`<div class="window-header" style="border-radius:${borderRadius}px ${borderRadius}px 0 0; background: linear-gradient(90deg, ${accentColor}, ${adjustColor(accentColor, -20)});"><span>${title}</span><div class="window-controls"><span class="minimize">─</span><span class="close-win">✕</span></div></div><div class="window-content">${html}</div>`;
         makeDraggable(w.querySelector('.window-header'),w);
         let icon = {paint:'🎨',myPC:'💻',ie:'🌐',notepad:'📝',games:'🎮',store:'🛒',office:'📊',cmd:'>_',recycleBin:'🗑️'}[appId] || '📄';
@@ -543,17 +470,10 @@
         d.className='desktop-icon';
         d.setAttribute('data-type',type);
         d.setAttribute('data-id',id);
-        d.style.left=left+'px';
-        d.style.top=top+'px';
-        d.style.width=iconSize+'px';
+        d.style.left=left+'px'; d.style.top=top+'px'; d.style.width=iconSize+'px';
         d.style.background = `rgba(0,0,0,${iconLabelTransparency})`;
         d.style.backdropFilter = 'none';
-        let iconHtml = '';
-        if (iconChar.startsWith('http')) {
-            iconHtml = `<img src="${iconChar}" alt="${label}" style="width:42px; height:42px; object-fit:contain;">`;
-        } else {
-            iconHtml = `<div style="font-size:42px;">${iconChar}</div>`;
-        }
+        let iconHtml = iconChar.startsWith('http') ? `<img src="${iconChar}" alt="${label}" style="width:42px; height:42px; object-fit:contain;">` : `<div style="font-size:42px;">${iconChar}</div>`;
         d.innerHTML = `${iconHtml}<span style="font-size:${fontSize}px; display:${showIconLabels?'block':'none'}">${label}</span>`;
         d.addEventListener('mousedown',startDrag);
         if(type==='app') d.addEventListener('dblclick',()=>launchApp(id));
@@ -593,13 +513,14 @@
     function restoreAllApps() { if(deletedApps.length===0) return; deletedApps.forEach(appId=>{ if(!appPositions[appId]) appPositions[appId]=getNextFreePosition(); }); deletedApps=[]; renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); saveState(); alert("All apps restored from Recycle Bin."); }
     function uninstallGame(gid) { downloadedGames = downloadedGames.filter(g => g.id != gid); deletedDownloadedGames.push(gid); renderDesktopIcons(); saveState(); }
 
-    // --- DOWNLOAD QUEUE & STORE (Pinterest, Chrome, Bank, Discord) ---
+    // --- DOWNLOAD QUEUE & STORE (Pinterest, Chrome, Bank, Discord, Microsoft+) ---
     function showDownloadAnimation(callback) { let overlay=document.createElement('div'); overlay.className='download-overlay'; overlay.innerHTML=`<div class="download-box"><h3>Downloading...</h3><div class="download-progress"><div class="download-bar" id="dlBar"></div></div><p id="dlText">0%</p></div>`; document.body.appendChild(overlay); let bar=overlay.querySelector('#dlBar'), text=overlay.querySelector('#dlText'); let duration=5000+Math.random()*15000; let start=Date.now(); let interval=setInterval(()=>{ let elapsed=Date.now()-start; let percent=Math.min(100, (elapsed/duration)*100); bar.style.width=percent+'%'; text.innerText=Math.floor(percent)+'%'; if(percent>=100) { clearInterval(interval); setTimeout(()=>{ overlay.remove(); callback(); },200); } },50); }
     const storeGames = [
         { id:"pinterest", name:"Pinterest", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Pinterest-logo.png" },
         { id:"chrome", name:"Google Chrome", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Google_Chrome_icon_(February_2022).svg.png" },
         { id:"bank", name:"Microsoft Bank", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/bank_78392.webp" },
-        { id:"discord", name:"Discord", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/discord-color-icon.webp" }
+        { id:"discord", name:"Discord", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/discord-color-icon.webp" },
+        { id:"microsoftplus", name:"Microsoft+", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/microsoft-logo-microsoft-icon-transparent-free-png.webp" }
     ];
     function installGame(def) {
         if(downloadingNow) { alert("Please wait, another download is in progress."); return; }
@@ -611,6 +532,7 @@
             else if (def.id === 'chrome') newGame.launch = () => { openChromeApp(); };
             else if (def.id === 'bank') newGame.launch = () => { openBankApp(); };
             else if (def.id === 'discord') newGame.launch = () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/Discord/'; };
+            else if (def.id === 'microsoftplus') newGame.launch = () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/MicrosoftPlus/'; };
             downloadedGames.push(newGame);
             const idx = deletedDownloadedGames.indexOf(def.id);
             if (idx !== -1) deletedDownloadedGames.splice(idx, 1);
@@ -683,22 +605,8 @@
         const win = createWindow('Microsoft Bank', bankHtml, 'bank');
         document.body.appendChild(win);
         const displayEl = win.querySelector('#bankBalanceDisplay');
-        win.querySelectorAll('.addBtn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                let amt = parseFloat(btn.getAttribute('data-amount'));
-                balance += amt;
-                updateDisplay(displayEl);
-                saveBalance();
-            });
-        });
-        win.querySelectorAll('.subBtn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                let amt = parseFloat(btn.getAttribute('data-amount'));
-                balance = Math.max(0, balance - amt);
-                updateDisplay(displayEl);
-                saveBalance();
-            });
-        });
+        win.querySelectorAll('.addBtn').forEach(btn => { btn.addEventListener('click', () => { let amt = parseFloat(btn.getAttribute('data-amount')); balance += amt; updateDisplay(displayEl); saveBalance(); }); });
+        win.querySelectorAll('.subBtn').forEach(btn => { btn.addEventListener('click', () => { let amt = parseFloat(btn.getAttribute('data-amount')); balance = Math.max(0, balance - amt); updateDisplay(displayEl); saveBalance(); }); });
     }
 
     // --- ENHANCED PAINT with Set as Wallpaper ---
@@ -901,71 +809,140 @@
         sel.addEventListener('change',switchGame); reset.addEventListener('click',switchGame); switchGame(); 
     }
 
-    // --- MY PC with clickable files ---
-    function getRandomFileContent(name) {
-        const contents = {
-            "System32": "Windows NT Kernel Version 2026\nBuild 26001.x86_64\nCopyright (c) Microsoft Corporation. All rights reserved.\n\nSystem32 directory contains core system files.\nCritical error if deleted.",
-            "Program Files": "[Directory]\nInstalled applications:\n- Windows Server 2026\n- Microsoft Office\n- Games Pack\n- Internet Explorer\nTotal size: 12.4 GB",
-            "Users": "User profiles:\n- Administrator\n- Guest\n- YourProfile\nDocuments, Desktop, Downloads folders.",
-            "Windows": "Windows operating system files.\nVersion: 2026 (Build 26001)\nRegistered owner: KrisXxXLL",
-            "pagefile.sys": "[System file] Virtual memory page file.\nSize: 4.00 GB\nCurrent usage: 32%",
-            "Recycler (hidden)": "Recycle Bin system folder.\nContains deleted items metadata.\nHidden system folder.",
-            "Documents and Settings": "Legacy user profile folder.\nCompatibility link to Users folder.",
-            "PerfLogs": "Performance logs directory.\nEmpty by default.\nUsed for system diagnostics.",
-            "ProgramData": "Application data storage.\nContains settings for installed software."
-        };
-        return contents[name] || `Random content from ${name}:\nLast modified: ${new Date().toLocaleString()}\nFile size: ${Math.floor(Math.random() * 10000)} bytes\nChecksum: 0x${Math.floor(Math.random() * 0xFFFF).toString(16)}`;
-    }
-    function openSystemFile(fileName) {
-        const content = getRandomFileContent(fileName);
-        const win = createWindow(fileName, `<pre style="white-space: pre-wrap; font-family: monospace;">${escapeHtml(content)}</pre>`, `file_${fileName}_${Date.now()}`);
-        document.body.appendChild(win);
-    }
+    // --- REALISTIC MY PC (file explorer) ---
+    const fileSystem = {
+        name: "Local Disk (C:)", type: "folder",
+        children: [
+            { name: "Windows", type: "folder", children: [
+                { name: "System32", type: "folder", children: [
+                    { name: "config", type: "folder", children: [] },
+                    { name: "drivers", type: "folder", children: [] },
+                    { name: "ntoskrnl.exe", type: "file", content: "Windows NT Kernel & System" }
+                ]},
+                { name: "explorer.exe", type: "file", content: "Windows Explorer" },
+                { name: "notepad.exe", type: "file", content: "Notepad application" }
+            ]},
+            { name: "Program Files", type: "folder", children: [
+                { name: "Microsoft Office", type: "folder", children: [] },
+                { name: "Internet Explorer", type: "folder", children: [] }
+            ]},
+            { name: "Users", type: "folder", children: [
+                { name: "Public", type: "folder", children: [] },
+                { name: "YourProfile", type: "folder", children: [
+                    { name: "Documents", type: "folder", children: [] },
+                    { name: "Desktop", type: "folder", children: [] }
+                ]}
+            ]},
+            { name: "pagefile.sys", type: "file", content: "Virtual memory page file" },
+            { name: "Recycler", type: "folder", children: [] }
+        ]
+    };
+
     function myPCUI() {
-        let hiddenClass = showHiddenFiles ? '' : 'style="display:none"';
-        return `<div><h3>Local Disk (C:)</h3>
-        <div class="file-item" data-file="system32" style="cursor:pointer">📁 System32</div>
-        <div class="file-item" data-file="Program Files" style="cursor:pointer">📁 Program Files</div>
-        <div class="file-item" data-file="Users" style="cursor:pointer">📁 Users</div>
-        <div class="file-item" data-file="Windows" style="cursor:pointer">📁 Windows</div>
-        <div class="file-item" data-file="pagefile.sys" style="cursor:pointer">📄 pagefile.sys</div>
-        <div class="file-item" data-file="Recycler (hidden)" ${hiddenClass} style="cursor:pointer">📁 Recycler (hidden)</div>
-        <div class="file-item" data-file="Documents and Settings" style="cursor:pointer">📁 Documents and Settings</div>
-        <div class="file-item" data-file="PerfLogs" style="cursor:pointer">📁 PerfLogs</div>
-        <div class="file-item" data-file="ProgramData" style="cursor:pointer">📁 ProgramData</div>
-        <p style="margin-top:10px;"><i>${showHiddenFiles ? "Hidden files visible" : "Hidden files hidden"}</i></p>
+        return `<div id="explorerContainer">
+            <div class="explorer-path" id="explorerPath">C:\</div>
+            <div class="explorer-back"><button id="explorerBack">⬅ Back</button></div>
+            <div class="explorer-items" id="explorerItems"></div>
         </div>`;
     }
+
     function attachMyPCListeners(win) {
-        win.querySelectorAll('.file-item').forEach(el => {
-            const fileName = el.getAttribute('data-file');
-            if (fileName === 'system32') el.addEventListener('click', () => openSystem32Code());
-            else el.addEventListener('click', () => openSystemFile(fileName));
+        let currentPath = [fileSystem];
+        const pathEl = win.querySelector('#explorerPath');
+        const itemsEl = win.querySelector('#explorerItems');
+        const backBtn = win.querySelector('#explorerBack');
+
+        function renderCurrentFolder() {
+            const folder = currentPath[currentPath.length - 1];
+            const pathStr = currentPath.map(f => f.name).join('\\').replace(/^Local Disk \(C:\)/, 'C:');
+            pathEl.textContent = pathStr;
+            itemsEl.innerHTML = '';
+            if (!folder.children) return;
+            folder.children.sort((a,b) => {
+                if (a.type === b.type) return a.name.localeCompare(b.name);
+                return a.type === 'folder' ? -1 : 1;
+            }).forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'explorer-item';
+                const icon = item.type === 'folder' ? '📁' : '📄';
+                div.innerHTML = `<span style="font-size:24px;">${icon}</span> ${item.name}`;
+                div.addEventListener('dblclick', () => {
+                    if (item.type === 'folder') {
+                        currentPath.push(item);
+                        renderCurrentFolder();
+                    } else {
+                        const win = createWindow(item.name, `<pre>${escapeHtml(item.content || 'No preview available.')}</pre>`, `file_${item.name}`);
+                        document.body.appendChild(win);
+                    }
+                });
+                itemsEl.appendChild(div);
+            });
+        }
+
+        backBtn.addEventListener('click', () => {
+            if (currentPath.length > 1) {
+                currentPath.pop();
+                renderCurrentFolder();
+            }
         });
+
+        renderCurrentFolder();
     }
 
-    // --- CALENDAR & CALCULATOR ---
+    // --- FULLY FUNCTIONAL CALENDAR ---
     function openCalendar() {
-        const now = new Date(); const year = now.getFullYear(); const month = now.getMonth();
-        const firstDay = new Date(year, month, 1).getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate();
-        let html = `<div style="text-align:center"><h3>📅 ${now.toLocaleString('default', { month: 'long' })} ${year}</h3><table class="calendar"><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr>`;
-        let day = 1;
-        for (let i = 0; i < 6; i++) {
-            html += '<tr>';
-            for (let j = 0; j < 7; j++) {
-                if (i === 0 && j < firstDay) html += `<td></td>`;
-                else if (day > daysInMonth) html += `<td></td>`;
-                else {
-                    const isToday = (day === now.getDate() && month === now.getMonth() && year === now.getFullYear());
-                    html += `<td class="${isToday ? 'today' : ''}">${day}</td>`;
-                    day++;
+        const now = new Date();
+        let currentYear = now.getFullYear();
+        let currentMonth = now.getMonth();
+        
+        const renderCalendar = (container, year, month) => {
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            let html = `<div class="calendar-nav">
+                <button id="prevMonth">◀ Prev</button>
+                <span>${new Date(year, month).toLocaleString('default', { month: 'long' })} ${year}</span>
+                <button id="nextMonth">Next ▶</button>
+            </div>
+            <table class="calendar">
+                <tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr>`;
+            let day = 1;
+            for (let i = 0; i < 6; i++) {
+                html += '<tr>';
+                for (let j = 0; j < 7; j++) {
+                    if (i === 0 && j < firstDay) {
+                        html += `<td></td>`;
+                    } else if (day > daysInMonth) {
+                        html += `<td></td>`;
+                    } else {
+                        const isToday = (day === now.getDate() && month === now.getMonth() && year === now.getFullYear());
+                        html += `<td class="${isToday ? 'today' : ''}">${day}</td>`;
+                        day++;
+                    }
                 }
+                html += '</tr>';
+                if (day > daysInMonth) break;
             }
-            html += `</tr>`; if (day > daysInMonth) break;
-        }
-        html += `</table></div>`;
-        const win = createWindow('Calendar', html, 'calendar'); document.body.appendChild(win);
+            html += '</table>';
+            container.innerHTML = html;
+            container.querySelector('#prevMonth').onclick = () => {
+                currentMonth--;
+                if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+                renderCalendar(container, currentYear, currentMonth);
+            };
+            container.querySelector('#nextMonth').onclick = () => {
+                currentMonth++;
+                if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+                renderCalendar(container, currentYear, currentMonth);
+            };
+        };
+
+        const win = createWindow('Calendar', '<div id="calendarContainer"></div>', 'calendar');
+        const container = win.querySelector('#calendarContainer');
+        renderCalendar(container, currentYear, currentMonth);
+        document.body.appendChild(win);
     }
+
+    // --- FULLY FUNCTIONAL CALCULATOR ---
     function openCalculator() {
         const calcId = 'calc_' + Date.now();
         const html = `<div><h3>🧮 Calculator</h3><div class="calculator"><div class="display" id="${calcId}_display">0</div>
@@ -974,14 +951,18 @@
         <button data-val="1">1</button><button data-val="2">2</button><button data-val="3">3</button><button data-op="-">-</button>
         <button data-val="0">0</button><button data-val=".">.</button><button data-op="=">=</button><button data-op="+">+</button>
         <button data-op="C">C</button></div></div>`;
-        const win = createWindow('Calculator', html, 'calculator'); document.body.appendChild(win);
-        const display = win.querySelector(`#${calcId}_display`); let current = '0', prev = null, op = null;
+        const win = createWindow('Calculator', html, 'calculator');
+        document.body.appendChild(win);
+        const display = win.querySelector(`#${calcId}_display`);
+        let current = '0', prev = null, op = null;
         function updateDisplay() { display.innerText = current; }
         function compute() {
             if (prev !== null && op !== null) {
                 let a = parseFloat(prev), b = parseFloat(current);
-                if (op === '+') current = (a + b).toString(); else if (op === '-') current = (a - b).toString();
-                else if (op === '*') current = (a * b).toString(); else if (op === '/') current = b !== 0 ? (a / b).toString() : 'Error';
+                if (op === '+') current = (a + b).toString();
+                else if (op === '-') current = (a - b).toString();
+                else if (op === '*') current = (a * b).toString();
+                else if (op === '/') current = b !== 0 ? (a / b).toString() : 'Error';
                 prev = null; op = null; updateDisplay();
             }
         }
@@ -989,11 +970,43 @@
         win.querySelectorAll('[data-op]').forEach(btn => { btn.onclick = () => { let operation = btn.getAttribute('data-op'); if (operation === 'C') { current = '0'; prev = null; op = null; updateDisplay(); } else if (operation === '=') { compute(); } else { if (prev !== null && op !== null) compute(); prev = current; op = operation; current = '0'; } }; });
     }
 
-    // --- OFFICE UI ---
+    // --- FULLY FUNCTIONAL OFFICE UI ---
     function officeUI() {
-        if (!loggedIn) return `<div class="account-locked"><h3>🔒 Microsoft Office</h3><p>You need a Microsoft Account to use Office.</p><p>Please go to Start → Microsoft Account and create one.</p></div>`;
+        if (!loggedIn) return `<div class="account-locked"><h3>🔒 Microsoft Office</h3><p>You need a Microsoft Account to use Office.</p></div>`;
         let html = `<div><h3>Microsoft Office</h3><div id="officeView"><div class="office-toolbar"><button id="newProjectBtn">➕ New Project</button></div><div id="projectList" class="office-project-list"></div></div></div>`;
-        setTimeout(()=>{ let container = document.getElementById('officeView'); if(!container) return; function renderProjectList() { let listDiv = document.getElementById('projectList'); if(!listDiv) return; if(officeProjects.length===0) { listDiv.innerHTML='<p>No projects. Click "New Project" to create one.</p>'; return; } listDiv.innerHTML = officeProjects.map(p => `<div class="office-project-item" data-id="${p.id}"><span>📄 ${escapeHtml(p.name)}</span><div><button class="editProject">Edit</button> <button class="deleteProject">Delete</button></div></div>`).join(''); listDiv.querySelectorAll('.editProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); openProjectEditor(id); }; }); listDiv.querySelectorAll('.deleteProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); officeProjects=officeProjects.filter(p=>p.id!=id); renderProjectList(); saveState(); }; }); } function openProjectEditor(id) { let project = officeProjects.find(p=>p.id==id); if(!project) return; let win=createWindow(`Office - ${project.name}`, `<div class="office-editor"><input type="text" id="projName" value="${escapeHtml(project.name)}" style="width:100%; margin-bottom:10px;"><h4>Text</h4><textarea id="projText">${escapeHtml(project.textContent||'')}</textarea><h4>Drawing</h4><canvas id="officeCanvas" width="400" height="200" class="office-drawing" style="background:white;"></canvas><div><button id="clearCanvas">Clear Drawing</button></div><h4>Images</h4><input type="file" id="imageUpload" accept="image/*"><div id="imageList"></div><button id="saveProject">Save Project</button></div>`, `office_edit_${id}`); document.body.appendChild(win); let canvas=win.querySelector('#officeCanvas'), ctx=canvas.getContext('2d'); let drawing=false; if(project.drawingDataURL) { let img=new Image(); img.onload=()=>ctx.drawImage(img,0,0,canvas.width,canvas.height); img.src=project.drawingDataURL; } canvas.addEventListener('mousedown',()=>drawing=true); canvas.addEventListener('mouseup',()=>drawing=false); canvas.addEventListener('mousemove',(e)=>{ if(!drawing) return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let x=(e.clientX-rect.left)*sx, y=(e.clientY-rect.top)*sy; ctx.fillStyle='black'; ctx.fillRect(x-2,y-2,4,4); }); win.querySelector('#clearCanvas').onclick=()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); }; let imageList=win.querySelector('#imageList'); function refreshImages() { imageList.innerHTML=project.images?.map((img,idx)=>`<div><img src="${img}" style="max-width:100px; max-height:100px;"> <button data-idx="${idx}">Remove</button></div>`).join('')||''; imageList.querySelectorAll('button').forEach(btn=>{ btn.onclick=()=>{ let idx=parseInt(btn.getAttribute('data-idx')); project.images.splice(idx,1); refreshImages(); saveState(); }; }); } refreshImages(); win.querySelector('#imageUpload').onchange=(e)=>{ let file=e.target.files[0]; if(file){ let reader=new FileReader(); reader.onload=(ev)=>{ if(!project.images) project.images=[]; project.images.push(ev.target.result); refreshImages(); saveState(); }; reader.readAsDataURL(file); } }; win.querySelector('#saveProject').onclick=()=>{ project.name=win.querySelector('#projName').value; project.textContent=win.querySelector('#projText').value; project.drawingDataURL=canvas.toDataURL(); renderProjectList(); win.close(); saveState(); }; } function createNewProject() { let name=prompt("Project name:","My Project"); if(!name) return; let newId=Date.now()+Math.random(); officeProjects.push({ id:newId, name:name, textContent:"", drawingDataURL:null, images:[] }); renderProjectList(); saveState(); } document.getElementById('newProjectBtn').onclick=createNewProject; renderProjectList(); },50); return html;
+        setTimeout(()=>{ 
+            let container = document.getElementById('officeView'); 
+            if(!container) return; 
+            function renderProjectList() { 
+                let listDiv = document.getElementById('projectList'); 
+                if(!listDiv) return; 
+                if(officeProjects.length===0) { listDiv.innerHTML='<p>No projects. Click "New Project" to create one.</p>'; return; } 
+                listDiv.innerHTML = officeProjects.map(p => `<div class="office-project-item" data-id="${p.id}"><span>📄 ${escapeHtml(p.name)}</span><div><button class="editProject">Edit</button> <button class="deleteProject">Delete</button></div></div>`).join(''); 
+                listDiv.querySelectorAll('.editProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); openProjectEditor(id); }; }); 
+                listDiv.querySelectorAll('.deleteProject').forEach(btn=>{ btn.onclick=(e)=>{ let id=btn.closest('.office-project-item').getAttribute('data-id'); officeProjects=officeProjects.filter(p=>p.id!=id); renderProjectList(); saveState(); }; }); 
+            } 
+            function openProjectEditor(id) { 
+                let project = officeProjects.find(p=>p.id==id); if(!project) return; 
+                let win=createWindow(`Office - ${project.name}`, `<div class="office-editor"><input type="text" id="projName" value="${escapeHtml(project.name)}" style="width:100%; margin-bottom:10px;"><h4>Text</h4><textarea id="projText">${escapeHtml(project.textContent||'')}</textarea><h4>Drawing</h4><canvas id="officeCanvas" width="400" height="200" class="office-drawing" style="background:white;"></canvas><div><button id="clearCanvas">Clear Drawing</button></div><h4>Images</h4><input type="file" id="imageUpload" accept="image/*"><div id="imageList"></div><button id="saveProject">Save Project</button></div>`, `office_edit_${id}`); 
+                document.body.appendChild(win); 
+                let canvas=win.querySelector('#officeCanvas'), ctx=canvas.getContext('2d'); 
+                let drawing=false; 
+                if(project.drawingDataURL) { let img=new Image(); img.onload=()=>ctx.drawImage(img,0,0,canvas.width,canvas.height); img.src=project.drawingDataURL; } 
+                canvas.addEventListener('mousedown',()=>drawing=true); 
+                canvas.addEventListener('mouseup',()=>drawing=false); 
+                canvas.addEventListener('mousemove',(e)=>{ if(!drawing) return; let rect=canvas.getBoundingClientRect(), sx=canvas.width/rect.width, sy=canvas.height/rect.height; let x=(e.clientX-rect.left)*sx, y=(e.clientY-rect.top)*sy; ctx.fillStyle='black'; ctx.fillRect(x-2,y-2,4,4); }); 
+                win.querySelector('#clearCanvas').onclick=()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); }; 
+                let imageList=win.querySelector('#imageList'); 
+                function refreshImages() { imageList.innerHTML=project.images?.map((img,idx)=>`<div><img src="${img}" style="max-width:100px; max-height:100px;"> <button data-idx="${idx}">Remove</button></div>`).join('')||''; imageList.querySelectorAll('button').forEach(btn=>{ btn.onclick=()=>{ let idx=parseInt(btn.getAttribute('data-idx')); project.images.splice(idx,1); refreshImages(); saveState(); }; }); } 
+                refreshImages(); 
+                win.querySelector('#imageUpload').onchange=(e)=>{ let file=e.target.files[0]; if(file){ let reader=new FileReader(); reader.onload=(ev)=>{ if(!project.images) project.images=[]; project.images.push(ev.target.result); refreshImages(); saveState(); }; reader.readAsDataURL(file); } }; 
+                win.querySelector('#saveProject').onclick=()=>{ project.name=win.querySelector('#projName').value; project.textContent=win.querySelector('#projText').value; project.drawingDataURL=canvas.toDataURL(); renderProjectList(); win.close(); saveState(); }; 
+            } 
+            function createNewProject() { let name=prompt("Project name:","My Project"); if(!name) return; let newId=Date.now()+Math.random(); officeProjects.push({ id:newId, name:name, textContent:"", drawingDataURL:null, images:[] }); renderProjectList(); saveState(); } 
+            document.getElementById('newProjectBtn').onclick=createNewProject; 
+            renderProjectList(); 
+        },50);
+        return html;
     }
 
     // --- STORE UI ---
@@ -1011,7 +1024,7 @@
         if (container) container.addEventListener('click', (e) => { const item = e.target.closest('.store-item'); if (item) { const id = item.getAttribute('data-game'); const def = storeGames.find(g => g.id === id); if (def) installGame(def); } });
     }
 
-    // --- SETTINGS with updated labels and removed taskbar position ---
+    // --- SETTINGS with new options ---
     function openSettings() {
         const wallpapers = [
             { name: "Classic Green", type: "color", value: "#1b4d2e" },
@@ -1063,6 +1076,7 @@
             <label>Double-click speed: <input type="range" id="dbl" min="200" max="1000" step="50" value="${doubleClickSpeed}"></label><br>
             <label>Show hidden files in My PC: <input type="checkbox" id="hiddenFiles" ${showHiddenFiles?'checked':''}></label><br>
             <label>Startup Sound: <input type="checkbox" id="startupSound" ${startupSoundEnabled?'checked':''}></label><br>
+            <label>Show Welcome Screen: <input type="checkbox" id="showWelcome" ${showWelcomeScreen?'checked':''}></label><br>
             <h4>Ready Wallpapers</h4><div class="wallpaper-grid" id="wallpaperGrid"></div>
             <h4>Custom Wallpaper</h4><input type="file" id="wallpaperUpload" accept="image/*"><br><button id="resetWallpaper">Reset to solid color</button>
             <h4>Installed Store Apps</h4><div id="installedAppsList"></div>
@@ -1083,7 +1097,8 @@
                 iconSize = 80; iconSpacing = 100; taskbarHeight = 48; fontSize = 13; borderRadius = 12; windowOpacity = 1;
                 animations = true; windowSnap = true; iconTextShadow = true; showIconLabels = true; iconLabelTransparency = 0.3;
                 accentColor = "#2c5a3e"; taskbarTransparency = 0.92; clockFormat = '12h';
-                mouseStyle = "default"; doubleClickSpeed = 500; showHiddenFiles = false; startupSoundEnabled = true;
+                mouseStyle = "default"; doubleClickSpeed = 500; showHiddenFiles = false;
+                startupSoundEnabled = true; showWelcomeScreen = true;
                 desktopBgColor = "#1b4d2e"; wallpaperUrl = null; wallpaperDataURL = null;
                 applyWallpaper(); applyDesktopSettings(); applyAccentAndTaskbar(); applyExtraSettings(); updateClock();
                 saveState(); alert("Settings reset to defaults.");
@@ -1114,7 +1129,9 @@
             accentColor = win.querySelector('#accent').value; taskbarTransparency = parseFloat(win.querySelector('#tran').value);
             clockFormat = win.querySelector('#clockFormatSelect').value;
             mouseStyle = win.querySelector('#mouse').value; doubleClickSpeed = parseInt(win.querySelector('#dbl').value);
-            showHiddenFiles = win.querySelector('#hiddenFiles').checked; startupSoundEnabled = win.querySelector('#startupSound').checked;
+            showHiddenFiles = win.querySelector('#hiddenFiles').checked;
+            startupSoundEnabled = win.querySelector('#startupSound').checked;
+            showWelcomeScreen = win.querySelector('#showWelcome').checked;
             taskbarAutoHide = win.querySelector('#ah').checked;
             let theme = win.querySelector('#thm').value;
             desktopBgColor = theme === 'green' ? '#1b4d2e' : (theme === 'blue' ? '#1e3a5f' : '#0a0f1a');
@@ -1164,7 +1181,7 @@
         win.querySelector('.close-win').onclick = () => { audioPlayers.forEach(audio => { audio.pause(); audio.currentTime = 0; }); if (originalClose) originalClose(); else win.remove(); };
     }
 
-    // --- BSOD / SYSTEM32 ---
+    // --- BSOD / SYSTEM32 (unchanged) ---
     let draggedItemType=null;
     function handleFileDragStart(e) { let t=e.target.closest('.file-item'); if(t && t.getAttribute('data-file')==='system32') { draggedItemType='system32'; e.dataTransfer.setData('text/plain','system32'); e.target.style.opacity='0.6'; } else e.preventDefault(); }
     function handleFileDragEnd(e) { if(e.target) e.target.style.opacity=''; draggedItemType=null; }
@@ -1199,17 +1216,31 @@
     desktopDiv.addEventListener('contextmenu', (e) => { e.preventDefault(); showContextMenu(e.clientX, e.clientY, e.target.closest('.desktop-icon')); });
     taskbar.addEventListener('contextmenu', (e) => { e.preventDefault(); let menu = document.createElement('div'); menu.className = 'context-menu'; menu.style.left = e.clientX + 'px'; menu.style.top = e.clientY + 'px'; menu.innerHTML = `<div id="taskbarSettings">⚙️ Taskbar settings</div><div id="taskbarAutoHide">🔄 Auto-hide taskbar</div>`; document.body.appendChild(menu); let close = () => { menu.remove(); document.removeEventListener('click', close); }; document.addEventListener('click', close); document.getElementById('taskbarSettings').onclick = () => { openSettings(); menu.remove(); }; document.getElementById('taskbarAutoHide').onclick = () => { taskbarAutoHide = !taskbarAutoHide; applyDesktopSettings(); menu.remove(); }; });
 
-    // ==================== WELCOME APP & BOOT WELCOME WINDOW ====================
+    // ==================== WELCOME APP (with Remove Startup Sound button) ====================
     function openWelcomeApp() {
         const images = [
             "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Screenshot%202026-04-12%20190831.png",
             "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Screenshot%202026-04-12%20190951.png",
             "https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Screenshot%202026-04-12%20191453.png"
         ];
-        const galleryHtml = `<div class="welcome-gallery"><h2 style="text-align:center;">Welcome to Windows Server 2026</h2>${images.map(url => `<img src="${url}" alt="Screenshot" style="max-width:100%;">`).join('')}<p style="text-align:center; margin-top:20px;">Created by KrisXxXLL</p></div>`;
-        const win = createWindow("Welcome to Windows Server 2026", galleryHtml, "welcomeApp"); document.body.appendChild(win);
+        const galleryHtml = `<div class="welcome-gallery">
+            <h2 style="text-align:center;">Welcome to Windows Server 2026</h2>
+            ${images.map(url => `<img src="${url}" alt="Screenshot" style="max-width:100%;">`).join('')}
+            <p style="text-align:center; margin-top:20px;">Created by KrisXxXLL</p>
+            <button id="removeStartupSoundBtn" style="background:#aa3333; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">🔇 Remove Startup Sound</button>
+        </div>`;
+        const win = createWindow("Welcome to Windows Server 2026", galleryHtml, "welcomeApp");
+        document.body.appendChild(win);
+        win.querySelector('#removeStartupSoundBtn').addEventListener('click', () => {
+            startupSoundEnabled = false;
+            saveState();
+            alert("Startup sound has been permanently disabled. You can re-enable it in Settings.");
+            win.close();
+        });
     }
+
     function showBootWelcomeWindow() {
+        if (!showWelcomeScreen) return;
         const welcomeHtml = `<div class="boot-welcome-content"><h2>🎉 Welcome to Windows Server 2026</h2><p>Your secure server environment is ready.</p><p>Enjoy the experience!</p><button id="closeBootWelcome">Close</button></div>`;
         const win = createWindow("Welcome", welcomeHtml, "bootWelcome");
         win.classList.add('boot-welcome-window'); win.style.left = (window.innerWidth/2 - 200) + 'px'; win.style.top = (window.innerHeight/2 - 150) + 'px';
@@ -1235,30 +1266,26 @@
     document.getElementById('welcomeBtn').addEventListener('click', () => { openWelcomeApp(); startMenu.classList.remove('show'); });
     
     function showRunDialog() { let cmd=prompt("Run command:\nopen [app], delete [app], restart pc, shutdown pc, 666"); if(!cmd) return; let c=cmd.trim().toLowerCase(); if(c.startsWith('open ')) { let an=c.substring(5); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an]) launchApp(map[an]); } else if(c.startsWith('delete ')) { let an=c.substring(7); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an] && !deletedApps.includes(map[an])) { deletedApps.push(map[an]); renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); saveState(); } } else if(c==='restart pc') restart(); else if(c==='shutdown pc') shutdown(); else if(c==='666') trigger666Chaos(); else alert("Invalid"); }
-    function shutdown() { bootScreen.style.display='flex'; desktopDiv.style.display='none'; alert("Shutdown."); }
-    function restart() { bootScreen.style.display='flex'; desktopDiv.style.display='none'; setTimeout(()=>location.reload(),800); }
+    function shutdown() { desktopDiv.style.display='none'; alert("Shutdown."); }
+    function restart() { location.reload(); }
     function launchApp(id) { if(openWindows.has(id)) { openWindows.get(id).windowElement.style.display='flex'; return; } if(id==='recycleBin'){ if(openWindows.has('recycleBin')) openWindows.get('recycleBin').windowElement.style.display='flex'; else { let win=createWindow('Recycle Bin','<div>Loading...</div>','recycleBin'); document.body.appendChild(win); refreshRecycleBin(); } return; } let def=APP_LIST.find(a=>a.id===id); if(!def) return; let content='', init=null; if(id==='paint') { content=paintUI(); init=initPaint; } else if(id==='myPC') { content=myPCUI(); init=(win)=>{ attachMyPCListeners(win); }; } else if(id==='ie') { content=ieUI(); init=initIE; } else if(id==='notepad') { content=notepadUI(); init=initNotepad; } else if(id==='games') { content=gamesUI(); init=initGames; } else if(id==='store') { content=storeUI(); init=initStore; } else if(id==='office') { content=officeUI(); init=null; } else if(id==='cmd') { content=cmdUI(); init=initCMD; } else return; let win=createWindow(def.name,content,id); document.body.appendChild(win); if(init) init(win); }
 
     function escapeHtml(s){ return s.replace(/[&<>]/g,m=> m==='&'?'&amp;': m==='<'?'&lt;':'&gt;'); }
     
-    // Load account and state before boot
+    // Load account and state
     loadAccount();
     const hasSaved = loadState();
     
-    // --- BOOT SEQUENCE ---
-    setTimeout(()=>{ 
-        bootScreen.style.opacity='0'; 
-        setTimeout(()=>{ 
-            bootScreen.style.display='none'; 
-            desktopDiv.style.display='block'; 
-            renderDesktopIcons(); 
-            if(!hasSaved) autoArrangeIcons(); 
-            saveState(); 
-            initBootSound();
-            showBootWelcomeWindow();
-        },600); 
-    },2600);
+    // Initialize desktop (no boot screen)
+    desktopDiv.style.display = 'block';
+    renderDesktopIcons(); 
+    if(!hasSaved) autoArrangeIcons(); 
+    saveState(); 
+    initBootSound();
+    showBootWelcomeWindow();
+    
     window.addEventListener('beforeunload', () => { saveState(); });
+    })();
 </script>
 </body>
 </html>
