@@ -770,7 +770,23 @@
     function notepadUI(){ return `<textarea id="nt" style="width:100%; height:300px;"></textarea><button id="saveNote">Save to Desktop</button>`; }
     function initNotepad(win){ win.querySelector('#saveNote').onclick=()=>{ let name=prompt("File name:","Note")+".txt"; if(name){ let pos=getNextFreePosition(); desktopFiles.push({id:Date.now()+Math.random(),name,content:win.querySelector('#nt').value,x:pos.x,y:pos.y,isImage:false}); renderDesktopIcons(); saveState(); alert("Saved!"); } }; }
     function ieUI(){ return `<div><input id="ieSearch" placeholder="Type URL or search term..."><button id="ieGo">Go</button></div><div id="ieRes" style="height:300px; overflow:auto; margin-top:10px; background:#fff; padding:10px;">🌐 Welcome to Internet Explorer<br>Type a website (e.g., https://example.com) or a search term.<br>Special keywords: sprunki, retrocore, youtube, google, 666</div>`; }
-    function initIE(win){ let inp=win.querySelector('#ieSearch'), btn=win.querySelector('#ieGo'), res=win.querySelector('#ieRes'); btn.onclick=()=>{ let q=inp.value.trim(); if(!q) return; let lower=q.toLowerCase(); if(lower==='sprunki') window.open('https://sprunki.com/','_blank'); else if(lower==='retrocore') window.open('https://krisxxxllkrisipurvanov-cpu.github.io/RetroCore/','_blank'); else if(lower==='youtube') window.open('https://youtube.com/','_blank'); else if(lower==='google') window.open('https://google.com/','_blank'); else if(lower==='666') res.innerHTML='<span style="color:red;">⚠️ Don\'t look out your window at 3am...</span>'; else if(q.startsWith('http://')||q.startsWith('https://')) window.open(q,'_blank'); else if(q.includes('.')) window.open('https://'+q,'_blank'); else window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank'); }; }
+    function initIE(win){ 
+        let inp=win.querySelector('#ieSearch'), btn=win.querySelector('#ieGo'), res=win.querySelector('#ieRes'); 
+        btn.onclick=()=>{ 
+            let q=inp.value.trim(); 
+            if(!q) return; 
+            let lower=q.toLowerCase(); 
+            if(lower==='sprunki') window.open('https://sprunki.com/','_blank'); 
+            else if(lower==='retrocore') window.open('https://krisxxxllkrisipurvanov-cpu.github.io/RetroCore/','_blank'); 
+            else if(lower==='youtube') window.open('https://youtube.com/','_blank'); 
+            else if(lower==='google') window.open('https://google.com/','_blank'); 
+            else if(lower==='the amazing digital circus') window.open('https://github.com/krisxxxllkrisipurvanov-cpu/the-amazing-digital-circus/deployments/github-pages','_blank');
+            else if(lower==='666') res.innerHTML='<span style="color:red;">⚠️ Don\'t look out your window at 3am...</span>'; 
+            else if(q.startsWith('http://')||q.startsWith('https://')) window.open(q,'_blank'); 
+            else if(q.includes('.')) window.open('https://'+q,'_blank'); 
+            else window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank'); 
+        }; 
+    }
     function cmdUI() { return `<div class="cmd-output" id="cmdOut">Windows Server 2026 CMD<br>Type 'help' for commands.<br></div><div class="cmd-input-line"><span class="cmd-prompt">C:\\></span><input id="cmdInp" class="cmd-input"></div>`; }
     function initCMD(win) { let out=win.querySelector('#cmdOut'), inp=win.querySelector('#cmdInp'); function add(t,e=false){ let d=document.createElement('div'); d.style.color=e?'#f66':'#0f0'; d.innerHTML=t; out.appendChild(d); out.scrollTop=out.scrollHeight; } function proc(c){ c=c.trim().toLowerCase(); if(c==='help') add("Commands: open [app], delete [app], restart pc, shutdown pc, 666\nApps: paint, mypc, ie, notepad, games, store, office, cmd"); else if(c.startsWith('open ')){ let an=c.substring(5); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an] && !deletedApps.includes(map[an])){ launchApp(map[an]); add(`Opening ${an}...`); } else add(`Error: ${an} not found or deleted.`,true); } else if(c.startsWith('delete ')){ let an=c.substring(7); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an] && !deletedApps.includes(map[an])){ deletedApps.push(map[an]); renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); add(`${an} deleted.`); } else add(`Cannot delete ${an}.`,true); } else if(c==='restart pc'){ add("Restarting..."); setTimeout(()=>restart(),500); } else if(c==='shutdown pc'){ add("Shutting down..."); setTimeout(()=>shutdown(),500); } else if(c==='666'){ add("⚠️ FORBIDDEN! CHAOS ENGAGED ⚠️",true); setTimeout(()=>trigger666Chaos(),100); } else add(`'${c}' not recognized.`,true); } inp.addEventListener('keypress',e=>{ if(e.key==='Enter'){ let cmd=inp.value; if(cmd.trim()){ add(`C:\\> ${cmd}`); proc(cmd); } inp.value=''; } }); }
     function gamesUI(){ return `<div><select id="gameSelect"><option value="snake">Snake</option><option value="tictactoe">Tic-Tac-Toe (Smart AI)</option><option value="pong">Pong</option></select><button id="resetGame">New</button></div><canvas id="gameCanvas" width="400" height="400" style="background:#1a2a1f;"></canvas><div id="gameStatus">Score:0</div>`; }
@@ -1024,7 +1040,7 @@
         if (container) container.addEventListener('click', (e) => { const item = e.target.closest('.store-item'); if (item) { const id = item.getAttribute('data-game'); const def = storeGames.find(g => g.id === id); if (def) installGame(def); } });
     }
 
-    // --- SETTINGS with new options ---
+    // --- SETTINGS with Reset PC navigation ---
     function openSettings() {
         const wallpapers = [
             { name: "Classic Green", type: "color", value: "#1b4d2e" },
@@ -1103,6 +1119,11 @@
                 applyWallpaper(); applyDesktopSettings(); applyAccentAndTaskbar(); applyExtraSettings(); updateClock();
                 saveState(); alert("Settings reset to defaults.");
                 win.close();
+            }
+        });
+        win.querySelector('#resetPCBtn').addEventListener('click', () => {
+            if (confirm("⚠️ Reset this PC will erase all your installed games, folders, files, office projects, and settings. This action cannot be undone. Are you sure?")) {
+                window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/ResetPC/';
             }
         });
         
