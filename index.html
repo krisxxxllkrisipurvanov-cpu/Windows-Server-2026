@@ -339,7 +339,7 @@
                 else if (g.id === 'bank') return { id: g.id, name: g.name, icon: g.icon, launch: () => { openBankApp(); } };
                 else if (g.id === 'discord') return { id: g.id, name: g.name, icon: g.icon, launch: () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/Discord/'; } };
                 else if (g.id === 'microsoftplus') return { id: g.id, name: g.name, icon: g.icon, launch: () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/MicrosoftPlus/'; } };
-                else if (g.id === 'obby') return { id: g.id, name: g.name, icon: g.icon, launch: () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/3D-GAME/'; } };
+                else if (g.id === 'sky_parkour') return { id: g.id, name: g.name, icon: g.icon, launch: () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/3D-GAME/'; } };
                 return null;
             }).filter(g => g);
             applyWallpaper();
@@ -514,7 +514,7 @@
     function restoreAllApps() { if(deletedApps.length===0) return; deletedApps.forEach(appId=>{ if(!appPositions[appId]) appPositions[appId]=getNextFreePosition(); }); deletedApps=[]; renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); saveState(); alert("All apps restored from Recycle Bin."); }
     function uninstallGame(gid) { downloadedGames = downloadedGames.filter(g => g.id != gid); deletedDownloadedGames.push(gid); renderDesktopIcons(); saveState(); }
 
-    // --- DOWNLOAD QUEUE & STORE (Pinterest, Chrome, Bank, Discord, Microsoft+, Obby Game) ---
+    // --- DOWNLOAD QUEUE & STORE (Pinterest, Chrome, Bank, Discord, Microsoft+, Sky Parkour) ---
     function showDownloadAnimation(callback) { let overlay=document.createElement('div'); overlay.className='download-overlay'; overlay.innerHTML=`<div class="download-box"><h3>Downloading...</h3><div class="download-progress"><div class="download-bar" id="dlBar"></div></div><p id="dlText">0%</p></div>`; document.body.appendChild(overlay); let bar=overlay.querySelector('#dlBar'), text=overlay.querySelector('#dlText'); let duration=5000+Math.random()*15000; let start=Date.now(); let interval=setInterval(()=>{ let elapsed=Date.now()-start; let percent=Math.min(100, (elapsed/duration)*100); bar.style.width=percent+'%'; text.innerText=Math.floor(percent)+'%'; if(percent>=100) { clearInterval(interval); setTimeout(()=>{ overlay.remove(); callback(); },200); } },50); }
     const storeGames = [
         { id:"pinterest", name:"Pinterest", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Pinterest-logo.png" },
@@ -522,7 +522,7 @@
         { id:"bank", name:"Microsoft Bank", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/bank_78392.webp" },
         { id:"discord", name:"Discord", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/discord-color-icon.webp" },
         { id:"microsoftplus", name:"Microsoft+", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/microsoft-logo-microsoft-icon-transparent-free-png.webp" },
-        { id:"obby", name:"Obby Game", icon:"🎮" }
+        { id:"sky_parkour", name:"Sky Parkour", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Sky%20Parkour.png" }
     ];
     function installGame(def) {
         if(downloadingNow) { alert("Please wait, another download is in progress."); return; }
@@ -535,7 +535,7 @@
             else if (def.id === 'bank') newGame.launch = () => { openBankApp(); };
             else if (def.id === 'discord') newGame.launch = () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/Discord/'; };
             else if (def.id === 'microsoftplus') newGame.launch = () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/MicrosoftPlus/'; };
-            else if (def.id === 'obby') newGame.launch = () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/3D-GAME/'; };
+            else if (def.id === 'sky_parkour') newGame.launch = () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/3D-GAME/'; };
             downloadedGames.push(newGame);
             const idx = deletedDownloadedGames.indexOf(def.id);
             if (idx !== -1) deletedDownloadedGames.splice(idx, 1);
