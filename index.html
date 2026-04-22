@@ -6,7 +6,6 @@
     <title>Windows Server 2026 | KrisXxXLL</title>
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/window.png">
     <style>
-        /* (styles unchanged – only functional additions) */
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; height: 100vh; width: 100vw; background: #0c0e14; }
         .desktop { width: 100%; height: 100%; background: #1b4d2e; position: relative; overflow: hidden; transition: background-color 0.2s, background-image 0.2s; background-size: cover; background-position: center; }
@@ -287,7 +286,7 @@
     }
 
     // --- CORE VARIABLES ---
-    let customAppIcons = {}; // new: store custom icon overrides
+    let customAppIcons = {}; 
     
     function saveState() {
         const state = {
@@ -345,6 +344,7 @@
                 else if (g.id === 'microsoftplus') return { id: g.id, name: g.name, icon: g.icon, launch: () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/MicrosoftPlus/'; } };
                 else if (g.id === 'sky_parkour') return { id: g.id, name: g.name, icon: g.icon, launch: () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/3D-GAME/'; } };
                 else if (g.id === 'youtube') return { id: g.id, name: g.name, icon: g.icon, launch: () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/Maze/'; } };
+                else if (g.id === 'smartybox') return { id: g.id, name: g.name, icon: g.icon, launch: () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/Smatrybox/'; } };
                 return null;
             }).filter(g => g);
             applyWallpaper();
@@ -519,7 +519,7 @@
     function restoreAllApps() { if(deletedApps.length===0) return; deletedApps.forEach(appId=>{ if(!appPositions[appId]) appPositions[appId]=getNextFreePosition(); }); deletedApps=[]; renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); saveState(); alert("All apps restored from Recycle Bin."); }
     function uninstallGame(gid) { downloadedGames = downloadedGames.filter(g => g.id != gid); deletedDownloadedGames.push(gid); renderDesktopIcons(); saveState(); }
 
-    // --- DOWNLOAD QUEUE & STORE (includes YouTube) ---
+    // --- DOWNLOAD QUEUE & STORE (includes YouTube & Smartybox) ---
     function showDownloadAnimation(callback) { let overlay=document.createElement('div'); overlay.className='download-overlay'; overlay.innerHTML=`<div class="download-box"><h3>Downloading...</h3><div class="download-progress"><div class="download-bar" id="dlBar"></div></div><p id="dlText">0%</p></div>`; document.body.appendChild(overlay); let bar=overlay.querySelector('#dlBar'), text=overlay.querySelector('#dlText'); let duration=5000+Math.random()*15000; let start=Date.now(); let interval=setInterval(()=>{ let elapsed=Date.now()-start; let percent=Math.min(100, (elapsed/duration)*100); bar.style.width=percent+'%'; text.innerText=Math.floor(percent)+'%'; if(percent>=100) { clearInterval(interval); setTimeout(()=>{ overlay.remove(); callback(); },200); } },50); }
     const storeGames = [
         { id:"pinterest", name:"Pinterest", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Pinterest-logo.png" },
@@ -528,7 +528,8 @@
         { id:"discord", name:"Discord", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/discord-color-icon.webp" },
         { id:"microsoftplus", name:"Microsoft+", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/microsoft-logo-microsoft-icon-transparent-free-png.webp" },
         { id:"sky_parkour", name:"Sky Parkour", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Sky%20Parkour.png" },
-        { id:"youtube", name:"YouTube", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/1384060.png" }
+        { id:"youtube", name:"YouTube", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/1384060.png" },
+        { id:"smartybox", name:"Smartybox", icon:"📦" }
     ];
     function installGame(def) {
         if(downloadingNow) { alert("Please wait, another download is in progress."); return; }
@@ -543,6 +544,7 @@
             else if (def.id === 'microsoftplus') newGame.launch = () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/MicrosoftPlus/'; };
             else if (def.id === 'sky_parkour') newGame.launch = () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/3D-GAME/'; };
             else if (def.id === 'youtube') newGame.launch = () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/Maze/'; };
+            else if (def.id === 'smartybox') newGame.launch = () => { window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/Smatrybox/'; };
             downloadedGames.push(newGame);
             const idx = deletedDownloadedGames.indexOf(def.id);
             if (idx !== -1) deletedDownloadedGames.splice(idx, 1);
@@ -1040,7 +1042,7 @@
         if (!loggedIn) return `<div class="account-locked"><h3>🛒 Microsoft Store</h3><p>You need a Microsoft Account to access the Store.</p></div>`;
         let html='<h3>Microsoft Store</h3><div id="storeItemsContainer" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">';
         storeGames.forEach(g=>{ 
-            let iconHtml = g.icon.startsWith('http') ? `<img src="${g.icon}" style="width:32px;height:32px;object-fit:contain;">` : g.icon;
+            let iconHtml = g.icon.startsWith('http') ? `<img src="${g.icon}" style="width:32px;height:32px;object-fit:contain;">` : `<span style="font-size:32px;">${g.icon}</span>`;
             html+=`<div class="store-item" data-game="${g.id}" style="background:#d4cfb8;padding:10px;border-radius:8px;text-align:center;cursor:pointer;">${iconHtml} ${g.name}<br><small>Click to install</small></div>`; 
         });
         html+='</div>'; return html;
@@ -1069,7 +1071,7 @@
             container.innerHTML = '';
             downloadedGames.forEach(game => {
                 const div = document.createElement('div'); div.className = 'installed-app';
-                let iconHtml = game.icon.startsWith('http') ? `<img src="${game.icon}" style="width:24px;height:24px;object-fit:contain;">` : game.icon;
+                let iconHtml = game.icon.startsWith('http') ? `<img src="${game.icon}" style="width:24px;height:24px;object-fit:contain;">` : `<span style="font-size:24px;">${game.icon}</span>`;
                 div.innerHTML = `<span>${iconHtml} ${game.name}</span><div style="display:flex; gap:5px;"><button class="open-btn" data-id="${game.id}">Open</button><button class="show-btn" data-id="${game.id}">Show on Desktop</button><button class="uninstall-btn" data-id="${game.id}">Uninstall</button></div>`;
                 container.appendChild(div);
             });
@@ -1077,7 +1079,6 @@
             container.querySelectorAll('.show-btn').forEach(btn => btn.addEventListener('click', () => { const id = btn.getAttribute('data-id'); const idx = deletedDownloadedGames.indexOf(id); if (idx !== -1) deletedDownloadedGames.splice(idx, 1); if (!appPositions[`game_${id}`]) appPositions[`game_${id}`] = getNextFreePosition(); renderDesktopIcons(); alert(`${downloadedGames.find(g=>g.id===id)?.name} icon added to desktop.`); }));
             container.querySelectorAll('.uninstall-btn').forEach(btn => btn.addEventListener('click', () => { const id = btn.getAttribute('data-id'); if (confirm(`Uninstall ${downloadedGames.find(g=>g.id===id)?.name}?`)) { uninstallGame(id); renderInstalledAppsList(); } }));
         }
-        // Build app selector for custom icons
         const desktopApps = APP_LIST.filter(a => a.desktop && !deletedApps.includes(a.id) && a.id !== 'recycleBin');
         let appSelectOptions = desktopApps.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
         let html = `<div>
@@ -1266,7 +1267,6 @@
             else if (type === 'game') { menu.innerHTML = `<div id="ctxUninstallGame">🗑️ Uninstall Game</div>`; document.body.appendChild(menu); activeContextMenu = menu; const close = (e) => { if (activeContextMenu && !activeContextMenu.contains(e.target)) { activeContextMenu.remove(); activeContextMenu = null; document.removeEventListener('click', close); } }; document.addEventListener('click', close); document.getElementById('ctxUninstallGame').onclick = () => { uninstallGame(id); if(activeContextMenu) activeContextMenu.remove(); activeContextMenu=null; }; return; }
             else if (type === 'app' && id === 'recycleBin') { menu.innerHTML = `<div id="ctxRestoreAll">♻️ Restore all apps</div>`; document.body.appendChild(menu); activeContextMenu = menu; const close = (e) => { if (activeContextMenu && !activeContextMenu.contains(e.target)) { activeContextMenu.remove(); activeContextMenu = null; document.removeEventListener('click', close); } }; document.addEventListener('click', close); document.getElementById('ctxRestoreAll').onclick = () => { restoreAllApps(); if(activeContextMenu) activeContextMenu.remove(); activeContextMenu=null; }; return; }
         }
-        // Desktop background menu (no targetIcon)
         let html = `<div id="ctxNewFolder">📁 New Folder</div><div id="ctxRefresh">🔄 Refresh</div><div id="ctxAutoArrange">✨ Auto Arrange Icons</div><div id="ctxLargeIcons">🔍 Larger Icons</div><div id="ctxSmallIcons">🔍 Smaller Icons</div>`;
         html += `<div id="ctxRefreshAll">🔄 Refresh All Icons</div>`;
         html += `<div id="ctxAutoRecycle">🗑️ Auto Put Recycle Bin</div>`;
