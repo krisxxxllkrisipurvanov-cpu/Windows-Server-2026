@@ -529,7 +529,7 @@
         { id:"microsoftplus", name:"Microsoft+", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/microsoft-logo-microsoft-icon-transparent-free-png.webp" },
         { id:"sky_parkour", name:"Sky Parkour", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Sky%20Parkour.png" },
         { id:"youtube", name:"YouTube", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/1384060.png" },
-        { id:"smartybox", name:"Smartybox", icon:"📦" }
+        { id:"smartybox", name:"Smartybox", icon:"https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/pngimg.com%20-%20box_PNG9.png" }
     ];
     function installGame(def) {
         if(downloadingNow) { alert("Please wait, another download is in progress."); return; }
@@ -621,7 +621,7 @@
         win.querySelectorAll('.subBtn').forEach(btn => { btn.addEventListener('click', () => { let amt = parseFloat(btn.getAttribute('data-amount')); balance = Math.max(0, balance - amt); updateDisplay(displayEl); saveBalance(); }); });
     }
 
-    // --- ENHANCED PAINT with Set as Wallpaper ---
+    // --- ENHANCED PAINT with continuous lines & resizable canvas ---
     function paintUI() { 
         return `<div class="paint-toolbar">
             <select id="ptool">
@@ -634,6 +634,10 @@
             <button id="pclear">Clear</button>
             <button id="savePaint">💾 Save as PNG</button>
             <button id="setWallpaperBtn">🖼️ Set as Wallpaper</button>
+            <span style="margin-left:15px;">Canvas:</span>
+            <input type="number" id="canvasW" value="450" style="width:60px;" min="100" max="1200"> ×
+            <input type="number" id="canvasH" value="350" style="width:60px;" min="100" max="800">
+            <button id="resizeCanvas">Resize</button>
         </div>
         <canvas id="paintCanvas" width="450" height="350" style="border:1px solid #aaa; background:white; cursor:crosshair;"></canvas>`;
     }
@@ -642,14 +646,17 @@
         canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; 
         ctx.fillStyle = 'white'; ctx.fillRect(0,0,canvas.width,canvas.height); 
         let painting = false, tool = 'brush', color = '#000000', size = 4, startX, startY, textFontSize = 20;
+        let lastX = 0, lastY = 0;  // for continuous lines
         let t = win.querySelector('#ptool'), c = win.querySelector('#pcolor'), s = win.querySelector('#psize'), clr = win.querySelector('#pclear');
         let saveBtn = win.querySelector('#savePaint'), textSizeInput = win.querySelector('#textSize');
         let wallpaperBtn = win.querySelector('#setWallpaperBtn');
+        let canvasWInput = win.querySelector('#canvasW'), canvasHInput = win.querySelector('#canvasH');
+        let resizeBtn = win.querySelector('#resizeCanvas');
         c.oninput = e => color = e.target.value;
         s.oninput = e => size = parseInt(e.target.value);
         textSizeInput.oninput = e => textFontSize = parseInt(e.target.value);
         t.onchange = e => tool = e.target.value.toLowerCase();
-        clr.onclick = () => { ctx.fillStyle = 'white'; ctx.fillRect(0,0,canvas.width,canvas.height); };
+        clr.onclick = () => { ctx.fillStyle = 'white'; ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillRect(0,0,canvas.width,canvas.height); };
         saveBtn.onclick = () => {
             let fileName = prompt("Enter file name (without .png):", "MyDrawing") || "MyDrawing";
             fileName = fileName.replace(/[\\/:*?"<>|]/g, '') + ".png";
@@ -666,20 +673,46 @@
             saveState();
             alert("Canvas set as desktop wallpaper!");
         };
-        function drawDot(x,y){ 
-            if (tool === 'spray') {
-                for (let i = 0; i < 30; i++) {
-                    let offsetX = (Math.random() - 0.5) * size * 2, offsetY = (Math.random() - 0.5) * size * 2;
-                    ctx.fillStyle = color; ctx.fillRect(x + offsetX, y + offsetY, 1, 1);
-                }
-            } else {
-                ctx.fillStyle = (tool === 'eraser') ? 'white' : color;
-                ctx.beginPath(); ctx.arc(x, y, size/2, 0, Math.PI*2); ctx.fill();
+        resizeBtn.onclick = () => {
+            let w = parseInt(canvasWInput.value) || 450;
+            let h = parseInt(canvasHInput.value) || 350;
+            if (w < 100) w = 100; if (h < 100) h = 100;
+            if (confirm(`Resize canvas to ${w}×${h} and clear the drawing?`)) {
+                canvas.width = w;
+                canvas.height = h;
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0,0,canvas.width,canvas.height);
+            }
+        };
+        // Drawing functions
+        function startPath(x,y) {
+            lastX = x; lastY = y;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+        function drawSegment(x,y) {
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+        function setStroke() {
+            ctx.lineWidth = size;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = (tool === 'eraser') ? 'white' : color;
+        }
+        // Spray (dots)
+        function sprayDots(x,y) {
+            for (let i = 0; i < 30; i++) {
+                let offsetX = (Math.random() - 0.5) * size * 2, offsetY = (Math.random() - 0.5) * size * 2;
+                ctx.fillStyle = color;
+                ctx.fillRect(x + offsetX, y + offsetY, 1, 1);
             }
         }
         function drawRect(x1,y1,x2,y2){ ctx.fillStyle = color; ctx.fillRect(Math.min(x1,x2), Math.min(y1,y2), Math.abs(x2-x1), Math.abs(y2-y1)); }
         function drawCircle(x1,y1,x2,y2){ let r = Math.hypot(x2-x1, y2-y1); ctx.beginPath(); ctx.arc(x1,y1,r,0,Math.PI*2); ctx.fillStyle = color; ctx.fill(); }
-        function drawLine(x1,y1,x2,y2){ ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.strokeStyle = color; ctx.lineWidth = size; ctx.stroke(); }
+        function drawLineShape(x1,y1,x2,y2){ ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.strokeStyle = color; ctx.lineWidth = size; ctx.stroke(); }
         function floodFill(x,y){ 
             let img = ctx.getImageData(0,0,canvas.width,canvas.height), data = img.data;
             let target = ctx.getImageData(x,y,1,1).data;
@@ -711,15 +744,25 @@
             if (tool === 'picker') { pickColor(mx,my); return; }
             if (tool === 'text') { addText(mx,my); return; }
             if (tool === 'fill') { floodFill(mx,my); return; }
-            painting = true; startX = mx; startY = my;
-            if (tool === 'brush' || tool === 'eraser' || tool === 'spray') drawDot(mx,my);
+            painting = true;
+            startX = mx; startY = my;
+            if (tool === 'brush' || tool === 'eraser') {
+                setStroke();
+                startPath(mx, my);
+            } else if (tool === 'spray') {
+                // spray doesn't use path
+            }
         });
         canvas.addEventListener('mousemove', (e) => {
             if(!painting) return;
             let rect = canvas.getBoundingClientRect(), sx = canvas.width/rect.width, sy = canvas.height/rect.height;
             let mx = (e.clientX - rect.left)*sx, my = (e.clientY - rect.top)*sy;
-            if (tool === 'brush' || tool === 'spray') drawDot(mx,my);
-            else if (tool === 'eraser') drawDot(mx,my);
+            if (tool === 'brush' || tool === 'eraser') {
+                drawSegment(mx, my);
+                lastX = mx; lastY = my;
+            } else if (tool === 'spray') {
+                sprayDots(mx, my);
+            }
         });
         canvas.addEventListener('mouseup', (e) => {
             if(!painting) return;
@@ -727,7 +770,11 @@
             let mx = (e.clientX - rect.left)*sx, my = (e.clientY - rect.top)*sy;
             if (tool === 'rect') drawRect(startX,startY,mx,my);
             else if (tool === 'circle') drawCircle(startX,startY,mx,my);
-            else if (tool === 'line') drawLine(startX,startY,mx,my);
+            else if (tool === 'line') drawLineShape(startX,startY,mx,my);
+            // close any open path
+            if (tool === 'brush' || tool === 'eraser') {
+                ctx.stroke();
+            }
             painting = false;
         });
     }
@@ -1052,7 +1099,7 @@
         if (container) container.addEventListener('click', (e) => { const item = e.target.closest('.store-item'); if (item) { const id = item.getAttribute('data-game'); const def = storeGames.find(g => g.id === id); if (def) installGame(def); } });
     }
 
-    // --- SETTINGS with Reset PC & Custom Icon Upload ---
+    // --- SETTINGS with Reset PC, Custom Icons, and SuperSoft1/2/3 buttons ---
     function openSettings() {
         const wallpapers = [
             { name: "Classic Green", type: "color", value: "#1b4d2e" },
@@ -1118,6 +1165,9 @@
             <h4>Theme</h4><select id="thm"><option value="green">Green</option><option value="blue">Blue</option><option value="dark">Dark</option></select><br>
             <h4>Load any Windows</h4>
             <button id="win95Btn" class="win95-btn">🖥️ WIN95</button>
+            <button id="supersoft1Btn" class="win95-btn">🔷 SuperSoft 1</button>
+            <button id="supersoft2Btn" class="win95-btn">🔶 SuperSoft 2</button>
+            <button id="supersoft3Btn" class="win95-btn">🔸 SuperSoft 3</button>
             <br><br>
             <button id="apply">Apply All</button>
             <button id="resetDefaultsBtn" style="margin-left:10px;">Reset to Defaults</button>
@@ -1126,6 +1176,9 @@
         let win = createWindow('Settings', html, 'settings'); document.body.appendChild(win);
         
         win.querySelector('#win95Btn').addEventListener('click', () => window.open('https://krisxxxllkrisipurvanov-cpu.github.io/Windows-95/', '_blank'));
+        win.querySelector('#supersoft1Btn').addEventListener('click', () => window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/SuperSoft-1/');
+        win.querySelector('#supersoft2Btn').addEventListener('click', () => window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/SuperSoft-2/');
+        win.querySelector('#supersoft3Btn').addEventListener('click', () => window.location.href = 'https://krisxxxllkrisipurvanov-cpu.github.io/SuperSoft-3/');
         win.querySelector('#resetDefaultsBtn').addEventListener('click', () => {
             if (confirm("Reset all settings to default values?")) {
                 iconSize = 80; iconSpacing = 100; taskbarHeight = 48; fontSize = 13; borderRadius = 12; windowOpacity = 1;
@@ -1255,7 +1308,7 @@
     function trigger666Chaos() { if(isBsodActive) return; let chaos=document.createElement('div'); chaos.className='chaos-overlay'; chaos.innerHTML='<div class="error-text">⚠️ 666 SYSTEM CORRUPTION ⚠️</div>'; document.body.appendChild(chaos); setTimeout(()=>{ chaos.remove(); triggerBSOD(); },3000); }
     function openSystem32Code() { let code=`// Windows Server 2026 Kernel\n// System32 Core\nconst kernel = { version:"2026", build:26001 };\nfunction init() { return "System ready"; }`; let win=createWindow("System32 Source",`<pre style="background:#1e1e1e; color:#d4d4d4; padding:12px;">${code}</pre>`,"system32_code"); document.body.appendChild(win); }
 
-    // --- RIGHT-CLICK CONTEXT MENU (with new options) ---
+    // --- RIGHT-CLICK CONTEXT MENU (with Refresh All Icons, Auto Put Recycle Bin) ---
     let activeContextMenu = null;
     function showContextMenu(x, y, targetIcon) {
         if (activeContextMenu) activeContextMenu.remove();
