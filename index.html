@@ -98,9 +98,10 @@
         .explorer-item { display: flex; align-items: center; gap: 8px; padding: 6px; cursor: pointer; border-bottom: 1px solid #ddd; }
         .explorer-item:hover { background: #e0dbc8; }
         .explorer-back { margin-bottom: 8px; }
-        /* new iframe styles */
         .iframe-container { width: 100%; height: calc(100% - 40px); border: 1px solid #aaa; background: white; }
         iframe { width: 100%; height: 100%; border: none; }
+        .chrome-back-btn { padding: 8px 16px; background: #2c5a3e; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 8px; }
+        .chrome-back-btn:hover { background: #40916c; }
     </style>
 </head>
 <body>
@@ -558,41 +559,27 @@
         });
     }
 
-    // --- GOOGLE CHROME APP (now with iframe) ---
+    // --- GOOGLE CHROME APP (no search bar, only back button and iframe) ---
     function openChromeApp() {
         const chromeHtml = `
-            <div style="padding:10px; display:flex; flex-direction:column; height:100%;">
-                <div class="chrome-search">
-                    <input type="text" id="chromeSearchInput" placeholder="Search Google or type a URL" style="flex:1; padding:10px; border-radius:24px; border:1px solid #ccc;">
-                    <button id="chromeSearchBtn" style="background:#1a73e8; color:white; border:none; padding:10px 24px; border-radius:24px; cursor:pointer;">Search</button>
-                </div>
+            <div style="display:flex; flex-direction:column; height:100%;">
+                <button id="chromeBackBtn" class="chrome-back-btn">← Go Back</button>
                 <div class="iframe-container" style="flex:1;">
-                    <iframe id="chromeFrame" src="" style="width:100%; height:100%; border:1px solid #aaa; background:white;"></iframe>
+                    <iframe id="chromeFrame" src="https://www.google.com/webhp?igu=1" style="width:100%; height:100%; border:1px solid #aaa; background:white;"></iframe>
                 </div>
             </div>
         `;
         const win = createWindow('Google Chrome', chromeHtml, 'chrome');
         document.body.appendChild(win);
-        const input = win.querySelector('#chromeSearchInput');
-        const btn = win.querySelector('#chromeSearchBtn');
+        const backBtn = win.querySelector('#chromeBackBtn');
         const frame = win.querySelector('#chromeFrame');
-        const doSearch = () => {
-            let query = input.value.trim();
-            if (query) {
-                let url;
-                if (query.includes('.') && !query.includes(' ')) {
-                    if (!query.startsWith('http://') && !query.startsWith('https://')) url = 'https://' + query;
-                    else url = query;
-                } else {
-                    url = 'https://www.google.com/search?q=' + encodeURIComponent(query);
-                }
-                frame.src = url;
+        backBtn.addEventListener('click', () => {
+            try {
+                frame.contentWindow.history.back();
+            } catch(e) {
+                // fallback: do nothing if cross-origin blocks
             }
-        };
-        btn.onclick = doSearch;
-        input.addEventListener('keypress', (e) => { if(e.key === 'Enter') doSearch(); });
-        // optional homepage
-        frame.src = 'https://www.google.com/webhp?igu=1'; // Google's basic search that allows iframe? may not work, but we try
+        });
     }
 
     // --- MICROSOFT BANK APP ---
@@ -835,7 +822,7 @@
     function notepadUI(){ return `<textarea id="nt" style="width:100%; height:300px;"></textarea><button id="saveNote">Save to Desktop</button>`; }
     function initNotepad(win){ win.querySelector('#saveNote').onclick=()=>{ let name=prompt("File name:","Note")+".txt"; if(name){ let pos=getNextFreePosition(); desktopFiles.push({id:Date.now()+Math.random(),name,content:win.querySelector('#nt').value,x:pos.x,y:pos.y,isImage:false}); renderDesktopIcons(); saveState(); alert("Saved!"); } }; }
 
-    // --- INTERNET EXPLORER (now with iframe) ---
+    // --- INTERNET EXPLORER (now opens Wikipedia) ---
     function ieUI(){ 
         return `<div style="display:flex; flex-direction:column; height:100%;">
             <div style="display:flex; gap:5px;">
@@ -877,8 +864,8 @@
             msgDiv.innerText = 'Loading...';
             frame.src = url;
         };
-        // Initial blank page
-        frame.src = 'about:blank';
+        // Set default page to Wikipedia
+        frame.src = 'https://en.wikipedia.org/wiki/Main_Page';
     }
 
     function cmdUI() { return `<div class="cmd-output" id="cmdOut">Windows Server 2026 CMD<br>Type 'help' for commands.<br></div><div class="cmd-input-line"><span class="cmd-prompt">C:\\></span><input id="cmdInp" class="cmd-input"></div>`; }
