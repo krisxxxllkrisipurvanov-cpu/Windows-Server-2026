@@ -98,6 +98,9 @@
         .explorer-item { display: flex; align-items: center; gap: 8px; padding: 6px; cursor: pointer; border-bottom: 1px solid #ddd; }
         .explorer-item:hover { background: #e0dbc8; }
         .explorer-back { margin-bottom: 8px; }
+        /* new iframe styles */
+        .iframe-container { width: 100%; height: calc(100% - 40px); border: 1px solid #aaa; background: white; }
+        iframe { width: 100%; height: 100%; border: none; }
     </style>
 </head>
 <body>
@@ -555,37 +558,41 @@
         });
     }
 
-    // --- GOOGLE CHROME APP ---
+    // --- GOOGLE CHROME APP (now with iframe) ---
     function openChromeApp() {
         const chromeHtml = `
-            <div style="padding:20px; text-align:center;">
-                <img src="https://raw.githubusercontent.com/krisxxxllkrisipurvanov-cpu/Windows-Server-2026/main/Google_Chrome_icon_(February_2022).svg.png" style="width:64px;height:64px;">
-                <h2>Welcome to Google Chrome</h2>
-                <p>The fast, secure browser from Google</p>
+            <div style="padding:10px; display:flex; flex-direction:column; height:100%;">
                 <div class="chrome-search">
                     <input type="text" id="chromeSearchInput" placeholder="Search Google or type a URL" style="flex:1; padding:10px; border-radius:24px; border:1px solid #ccc;">
                     <button id="chromeSearchBtn" style="background:#1a73e8; color:white; border:none; padding:10px 24px; border-radius:24px; cursor:pointer;">Search</button>
                 </div>
-                <p style="margin-top:20px; color:#666;">Your search will open in a new tab.</p>
+                <div class="iframe-container" style="flex:1;">
+                    <iframe id="chromeFrame" src="" style="width:100%; height:100%; border:1px solid #aaa; background:white;"></iframe>
+                </div>
             </div>
         `;
         const win = createWindow('Google Chrome', chromeHtml, 'chrome');
         document.body.appendChild(win);
         const input = win.querySelector('#chromeSearchInput');
         const btn = win.querySelector('#chromeSearchBtn');
+        const frame = win.querySelector('#chromeFrame');
         const doSearch = () => {
             let query = input.value.trim();
             if (query) {
+                let url;
                 if (query.includes('.') && !query.includes(' ')) {
-                    if (!query.startsWith('http://') && !query.startsWith('https://')) query = 'https://' + query;
-                    window.open(query, '_blank');
+                    if (!query.startsWith('http://') && !query.startsWith('https://')) url = 'https://' + query;
+                    else url = query;
                 } else {
-                    window.open('https://www.google.com/search?q=' + encodeURIComponent(query), '_blank');
+                    url = 'https://www.google.com/search?q=' + encodeURIComponent(query);
                 }
+                frame.src = url;
             }
         };
         btn.onclick = doSearch;
         input.addEventListener('keypress', (e) => { if(e.key === 'Enter') doSearch(); });
+        // optional homepage
+        frame.src = 'https://www.google.com/webhp?igu=1'; // Google's basic search that allows iframe? may not work, but we try
     }
 
     // --- MICROSOFT BANK APP ---
@@ -771,7 +778,6 @@
             if (tool === 'rect') drawRect(startX,startY,mx,my);
             else if (tool === 'circle') drawCircle(startX,startY,mx,my);
             else if (tool === 'line') drawLineShape(startX,startY,mx,my);
-            // close any open path
             if (tool === 'brush' || tool === 'eraser') {
                 ctx.stroke();
             }
@@ -828,24 +834,53 @@
     // --- OTHER APPS (Notepad, IE, CMD, My PC, Calendar, Calculator, Games, Office) ---
     function notepadUI(){ return `<textarea id="nt" style="width:100%; height:300px;"></textarea><button id="saveNote">Save to Desktop</button>`; }
     function initNotepad(win){ win.querySelector('#saveNote').onclick=()=>{ let name=prompt("File name:","Note")+".txt"; if(name){ let pos=getNextFreePosition(); desktopFiles.push({id:Date.now()+Math.random(),name,content:win.querySelector('#nt').value,x:pos.x,y:pos.y,isImage:false}); renderDesktopIcons(); saveState(); alert("Saved!"); } }; }
-    function ieUI(){ return `<div><input id="ieSearch" placeholder="Type URL or search term..."><button id="ieGo">Go</button></div><div id="ieRes" style="height:300px; overflow:auto; margin-top:10px; background:#fff; padding:10px;">🌐 Welcome to Internet Explorer<br>Type a website (e.g., https://example.com) or a search term.<br>Special keywords: sprunki, retrocore, youtube, google, 666</div>`; }
-    function initIE(win){ 
-        let inp=win.querySelector('#ieSearch'), btn=win.querySelector('#ieGo'), res=win.querySelector('#ieRes'); 
-        btn.onclick=()=>{ 
-            let q=inp.value.trim(); 
-            if(!q) return; 
-            let lower=q.toLowerCase(); 
-            if(lower==='sprunki') window.open('https://sprunki.com/','_blank'); 
-            else if(lower==='retrocore') window.open('https://krisxxxllkrisipurvanov-cpu.github.io/RetroCore/','_blank'); 
-            else if(lower==='youtube') window.open('https://youtube.com/','_blank'); 
-            else if(lower==='google') window.open('https://google.com/','_blank'); 
-            else if(lower==='the amazing digital circus') window.open('https://github.com/krisxxxllkrisipurvanov-cpu/the-amazing-digital-circus/deployments/github-pages','_blank');
-            else if(lower==='666') res.innerHTML='<span style="color:red;">⚠️ Don\'t look out your window at 3am...</span>'; 
-            else if(q.startsWith('http://')||q.startsWith('https://')) window.open(q,'_blank'); 
-            else if(q.includes('.')) window.open('https://'+q,'_blank'); 
-            else window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank'); 
-        }; 
+
+    // --- INTERNET EXPLORER (now with iframe) ---
+    function ieUI(){ 
+        return `<div style="display:flex; flex-direction:column; height:100%;">
+            <div style="display:flex; gap:5px;">
+                <input id="ieUrl" placeholder="Enter URL or search term..." style="flex:1; padding:8px; border:1px solid #aaa; border-radius:4px;">
+                <button id="ieGo">Go</button>
+            </div>
+            <div id="ieMessage" style="font-size:12px; color:gray; margin:4px 0;"></div>
+            <div class="iframe-container" style="flex:1;">
+                <iframe id="ieFrame" src="" style="width:100%; height:100%; border:1px solid #aaa; background:white;"></iframe>
+            </div>
+        </div>`;
     }
+    function initIE(win){ 
+        let urlInput = win.querySelector('#ieUrl');
+        let goBtn = win.querySelector('#ieGo');
+        let frame = win.querySelector('#ieFrame');
+        let msgDiv = win.querySelector('#ieMessage');
+        
+        goBtn.onclick = () => {
+            let q = urlInput.value.trim();
+            if(!q) return;
+            let lower = q.toLowerCase();
+            if(lower === '666') {
+                msgDiv.innerHTML = '<span style="color:red;">⚠️ Don\'t look out your window at 3am...</span>';
+                frame.src = 'about:blank';
+                return;
+            }
+            // Special keywords redirect inside iframe
+            let url;
+            if(lower === 'sprunki') url = 'https://sprunki.com/';
+            else if(lower === 'retrocore') url = 'https://krisxxxllkrisipurvanov-cpu.github.io/RetroCore/';
+            else if(lower === 'youtube') url = 'https://youtube.com/';
+            else if(lower === 'google') url = 'https://google.com/';
+            else if(lower === 'the amazing digital circus') url = 'https://github.com/krisxxxllkrisipurvanov-cpu/the-amazing-digital-circus/deployments/github-pages';
+            else if(q.startsWith('http://') || q.startsWith('https://')) url = q;
+            else if(q.includes('.')) url = 'https://' + q;
+            else url = 'https://www.google.com/search?q=' + encodeURIComponent(q);
+            
+            msgDiv.innerText = 'Loading...';
+            frame.src = url;
+        };
+        // Initial blank page
+        frame.src = 'about:blank';
+    }
+
     function cmdUI() { return `<div class="cmd-output" id="cmdOut">Windows Server 2026 CMD<br>Type 'help' for commands.<br></div><div class="cmd-input-line"><span class="cmd-prompt">C:\\></span><input id="cmdInp" class="cmd-input"></div>`; }
     function initCMD(win) { let out=win.querySelector('#cmdOut'), inp=win.querySelector('#cmdInp'); function add(t,e=false){ let d=document.createElement('div'); d.style.color=e?'#f66':'#0f0'; d.innerHTML=t; out.appendChild(d); out.scrollTop=out.scrollHeight; } function proc(c){ c=c.trim().toLowerCase(); if(c==='help') add("Commands: open [app], delete [app], restart pc, shutdown pc, 666\nApps: paint, mypc, ie, notepad, games, store, office, cmd"); else if(c.startsWith('open ')){ let an=c.substring(5); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an] && !deletedApps.includes(map[an])){ launchApp(map[an]); add(`Opening ${an}...`); } else add(`Error: ${an} not found or deleted.`,true); } else if(c.startsWith('delete ')){ let an=c.substring(7); let map={paint:'paint',mypc:'myPC',ie:'ie',notepad:'notepad',games:'games',store:'store',office:'office',cmd:'cmd'}; if(map[an] && !deletedApps.includes(map[an])){ deletedApps.push(map[an]); renderDesktopIcons(); if(openWindows.has('recycleBin')) refreshRecycleBin(); add(`${an} deleted.`); } else add(`Cannot delete ${an}.`,true); } else if(c==='restart pc'){ add("Restarting..."); setTimeout(()=>restart(),500); } else if(c==='shutdown pc'){ add("Shutting down..."); setTimeout(()=>shutdown(),500); } else if(c==='666'){ add("⚠️ FORBIDDEN! CHAOS ENGAGED ⚠️",true); setTimeout(()=>trigger666Chaos(),100); } else add(`'${c}' not recognized.`,true); } inp.addEventListener('keypress',e=>{ if(e.key==='Enter'){ let cmd=inp.value; if(cmd.trim()){ add(`C:\\> ${cmd}`); proc(cmd); } inp.value=''; } }); }
     function gamesUI(){ return `<div><select id="gameSelect"><option value="snake">Snake</option><option value="tictactoe">Tic-Tac-Toe (Smart AI)</option><option value="pong">Pong</option></select><button id="resetGame">New</button></div><canvas id="gameCanvas" width="400" height="400" style="background:#1a2a1f;"></canvas><div id="gameStatus">Score:0</div>`; }
